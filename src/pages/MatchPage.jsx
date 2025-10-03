@@ -4,6 +4,9 @@
 import React from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { BUILT_IN_MATCHES } from '../shared/builtinMatches'
+import { TeamCard } from '../sections/TeamCard'
+import { AiCommentary } from '../sections/AiCommentary'
+import { MatchStats } from '../sections/MatchStats'
 
 export function MatchPage() {
   const { id } = useParams()
@@ -17,17 +20,17 @@ export function MatchPage() {
       </div>
 
       {match ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 border bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-gray-500 text-sm mb-2">固定比赛（示意）</div>
-            <div className="text-xl font-medium">{match.teamA} vs {match.teamB}</div>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+            <TeamCard title={match.teamA} />
+            <div className="text-center py-10 select-none">
+              <div className="text-3xl font-extrabold text-yellow-400">VS</div>
+              <div className="text-xs text-slate-500 mt-1">Combat Power</div>
+            </div>
+            <TeamCard title={match.teamB} />
           </div>
-          <div className="border bg-white rounded-lg p-4 shadow-sm space-y-3">
-            <div className="font-semibold">下注入口（占位）</div>
-            <div className="text-sm text-gray-500">连接钱包并选择队伍与金额。</div>
-            <button className="w-full py-2 rounded bg-gray-200 text-gray-600 cursor-not-allowed">确认下注（未接链）</button>
-            <button className="w-full py-2 rounded bg-white border hover:bg-gray-50">模拟分析（静态文案）</button>
-          </div>
+          <AiCommentary />
+          <MatchStats />
         </div>
       ) : (
         <div className="text-sm text-gray-500">未找到该比赛。</div>
