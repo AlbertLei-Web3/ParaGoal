@@ -7,6 +7,7 @@ import { Layout } from './components/Layout'
 import { HomePage } from '../pages/HomePage'
 import { MatchPage } from '../pages/MatchPage'
 import { AdminPage } from '../pages/AdminPage'
+import { TestPage } from '../pages/TestPage'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/match/:id" element={<MatchPage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/test" element={<TestPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

@@ -16,8 +16,8 @@ export function MatchPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">对战详情</h1>
-        <Link to="/" className="text-sm text-blue-600 hover:underline">返回首页</Link>
+        <h1 className="text-2xl font-semibold">Match Detail</h1>
+        <Link to="/" className="text-sm text-blue-600 hover:underline">Back to Home</Link>
       </div>
 
       {match ? (
@@ -35,7 +35,7 @@ export function MatchPage() {
           <BetPanel teamA={match.teamA} teamB={match.teamB} />
         </div>
       ) : (
-        <div className="text-sm text-gray-500">未找到该比赛。</div>
+        <div className="text-sm text-gray-500">Match not found.</div>
       )}
     </div>
   )

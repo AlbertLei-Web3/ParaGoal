@@ -18,8 +18,9 @@ export function Layout({ children }) {
           <Link to="/" className="font-semibold text-lg text-slate-100">FanForce AI</Link>
           <div className="flex items-center gap-4">
             <nav className="hidden sm:flex items-center gap-3 text-slate-300">
-              <Link className={`px-2 py-1 rounded hover:bg-slate-800 ${location.pathname==='/'?'text-yellow-400':''}`} to="/">首页</Link>
+              <Link className={`px-2 py-1 rounded hover:bg-slate-800 ${location.pathname==='/'?'text-yellow-400':''}`} to="/">Home</Link>
               <Link className={`px-2 py-1 rounded hover:bg-slate-800 ${location.pathname.startsWith('/admin')?'text-yellow-400':''}`} to="/admin">Admin</Link>
+              <Link className={`px-2 py-1 rounded hover:bg-slate-800 ${location.pathname.startsWith('/test')?'text-yellow-400':''}`} to="/test">Test</Link>
             </nav>
             <WalletConnectPlaceholder />
           </div>

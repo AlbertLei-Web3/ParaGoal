@@ -9,7 +9,7 @@ export function AdminFabPlaceholder() {
     <Link
       to="/admin"
       className="fixed right-4 bottom-4 rounded-full shadow-lg bg-blue-600 text-white px-5 py-3 hover:bg-blue-700"
-      title="占位：连接任意钱包后可见"
+      title="Placeholder: visible after connecting any wallet"
     >
       Admin
     </Link>

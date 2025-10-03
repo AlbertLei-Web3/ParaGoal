@@ -27,7 +27,7 @@ export function HomePage() {
 
       <section className="pt-4">
         <h3 className="text-lg font-semibold mb-2">Select Teams to Compare</h3>
-        <p className="text-sm text-slate-400">后续将从链上与 Admin 创建中读取队伍，当前仅为样式占位。</p>
+        <p className="text-sm text-slate-400">Teams will be loaded from on-chain data and Admin-created entries later. UI only for now.</p>
       </section>
     </div>
   )
