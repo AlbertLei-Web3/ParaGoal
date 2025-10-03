@@ -4,27 +4,30 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { BUILT_IN_MATCHES } from '../shared/builtinMatches'
+import { HomeHero } from '../sections/HomeHero'
+import { ValueEquation } from '../sections/ValueEquation'
+import { MatchTile } from '../sections/MatchTile'
 
 export function HomePage() {
   return (
-    <div className="space-y-6">
-      <section className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">今日对战</h1>
-        <p className="text-sm text-gray-500">连接钱包后可下注与管理</p>
+    <div className="space-y-10">
+      <HomeHero />
+      <ValueEquation />
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          <span>🔥 Classic Matchups</span>
+        </h2>
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+          {BUILT_IN_MATCHES.map((m) => (
+            <MatchTile key={m.id} id={m.id} teamA={m.teamA} teamB={m.teamB} />
+          ))}
+        </div>
       </section>
 
-      <section className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {BUILT_IN_MATCHES.map((m) => (
-          <Link key={m.id} to={`/match/${m.id}`} className="block border bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition">
-            <div className="text-sm text-gray-500 mb-2">固定比赛</div>
-            <div className="text-lg font-medium">{m.teamA} vs {m.teamB}</div>
-          </Link>
-        ))}
-      </section>
-
-      <section>
-        <h2 className="text-lg font-semibold mb-2">更多比赛</h2>
-        <div className="text-sm text-gray-500">后续通过 Admin 创建并从链上读取。</div>
+      <section className="pt-4">
+        <h3 className="text-lg font-semibold mb-2">Select Teams to Compare</h3>
+        <p className="text-sm text-slate-400">后续将从链上与 Admin 创建中读取队伍，当前仅为样式占位。</p>
       </section>
     </div>
   )

@@ -9,15 +9,15 @@ import { AdminFabPlaceholder } from '../../components/AdminFabPlaceholder'
 export function Layout({ children }) {
   const location = useLocation()
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-950 to-slate-900">
       {/* Header: 顶部导航区域 / Top navigation */}
-      <header className="border-b bg-white">
+      <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="font-semibold text-lg">ParaGoal</Link>
+          <Link to="/" className="font-semibold text-lg text-slate-100">FanForce AI</Link>
           <div className="flex items-center gap-4">
-            <nav className="hidden sm:flex items-center gap-3">
-              <Link className={`px-2 py-1 rounded hover:bg-gray-100 ${location.pathname==='/'?'text-blue-600':''}`} to="/">首页</Link>
-              <Link className={`px-2 py-1 rounded hover:bg-gray-100 ${location.pathname.startsWith('/admin')?'text-blue-600':''}`} to="/admin">Admin</Link>
+            <nav className="hidden sm:flex items-center gap-3 text-slate-300">
+              <Link className={`px-2 py-1 rounded hover:bg-slate-800 ${location.pathname==='/'?'text-yellow-400':''}`} to="/">首页</Link>
+              <Link className={`px-2 py-1 rounded hover:bg-slate-800 ${location.pathname.startsWith('/admin')?'text-yellow-400':''}`} to="/admin">Admin</Link>
             </nav>
             <WalletConnectPlaceholder />
           </div>
@@ -26,7 +26,7 @@ export function Layout({ children }) {
 
       {/* Main: 主体容器 / Main content container */}
       <main className="flex-1">
-        <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="max-w-6xl mx-auto px-4 py-10">
           {children}
         </div>
       </main>

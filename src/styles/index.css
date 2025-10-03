@@ -1,14 +1,4 @@
-/* 中文/English：TailwindCSS 全局样式入口 */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* 基础页面样式（示例，不含任何数据）
-   Base page styles (no sample data) */
-html, body, #root {
-  height: 100%;
-}
-body {
-  @apply bg-gray-50 text-gray-900;
-}
 
