@@ -7,6 +7,7 @@ import { BUILT_IN_MATCHES } from '../shared/builtinMatches'
 import { TeamCard } from '../sections/TeamCard'
 import { AiCommentary } from '../sections/AiCommentary'
 import { MatchStats } from '../sections/MatchStats'
+import { BetPanel } from '../sections/BetPanel'
 
 export function MatchPage() {
   const { id } = useParams()
@@ -31,6 +32,7 @@ export function MatchPage() {
           </div>
           <AiCommentary />
           <MatchStats />
+          <BetPanel teamA={match.teamA} teamB={match.teamB} />
         </div>
       ) : (
         <div className="text-sm text-gray-500">未找到该比赛。</div>
