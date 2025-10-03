@@ -5,11 +5,13 @@ import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { WalletConnectPlaceholder } from '../../components/WalletConnectPlaceholder'
 import { AdminFabPlaceholder } from '../../components/AdminFabPlaceholder'
+import { PitchBackground } from '../../components/PitchBackground'
 
 export function Layout({ children }) {
   const location = useLocation()
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-950 to-slate-900">
+    <div className="min-h-screen flex flex-col">
+      <PitchBackground />
       {/* Header: 顶部导航区域 / Top navigation */}
       <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
