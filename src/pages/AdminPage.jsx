@@ -56,11 +56,12 @@ export function AdminPage() {
   const loadTeamsFromStorage = async () => {
     setIsLoadingTeams(true)
     try {
-      const cid = generateUserCID(address)
-      const result = await loadTeamsFromIPFS(cid)
+      const result = await loadTeamsFromIPFS()
       if (result.success) {
         setCustomTeams(result.teams)
-        toast.success('Teams loaded from IPFS')
+        if (result.teams.length > 0) {
+          toast.success('Teams loaded from local storage')
+        }
       }
     } catch (error) {
       console.log('No existing teams found, starting fresh')
@@ -102,7 +103,7 @@ export function AdminPage() {
       const updatedTeams = [...customTeams, newTeam]
       setCustomTeams(updatedTeams)
       
-      // Save to IPFS
+      // Save to localStorage
       const result = await saveTeamsToIPFS(updatedTeams)
       if (result.success) {
         toast.success(`Team "${name}" added successfully!`)
@@ -135,7 +136,7 @@ export function AdminPage() {
       const updatedTeams = customTeams.filter(team => team.name !== teamToDelete)
       setCustomTeams(updatedTeams)
       
-      // Save to IPFS
+      // Save to localStorage
       const result = await saveTeamsToIPFS(updatedTeams)
       if (result.success) {
         toast.success(`Team "${teamToDelete}" deleted successfully!`)
@@ -335,7 +336,7 @@ export function AdminPage() {
         </div>
       </div>
 
-      <p className="text-sm text-slate-500">Note: All interactions here are UI-only placeholders. Real on-chain writes will replace them once integrated.</p>
+      <p className="text-sm text-slate-500">Note: Team data is stored locally in your browser. Each user has independent storage.</p>
     </div>
   )
 }
