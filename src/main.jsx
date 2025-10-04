@@ -4,6 +4,8 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
+import { WalletProvider } from './contexts/WalletContext'
+import { ToastProvider } from './components/Toast'
 import App from './app/App'
 import './styles/index.css'
 
@@ -11,9 +13,12 @@ const container = document.getElementById('root')
 const root = createRoot(container)
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <WalletProvider>
+      <BrowserRouter>
+        <App />
+        <ToastProvider />
+      </BrowserRouter>
+    </WalletProvider>
   </React.StrictMode>
 )
 

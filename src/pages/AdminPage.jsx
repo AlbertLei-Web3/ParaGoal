@@ -8,14 +8,23 @@
 // - Newly created items live only in component state as UI placeholders. No on-chain writes, no local persistence, no fake seed data.
 // - "Existing Matches" shows the four built-in matches; user-created matches are also shown here for demo purposes.
 import React from 'react'
+import toast from 'react-hot-toast'
 import { GlowCard } from '../components/GlowCard'
 import { BUILT_IN_MATCHES } from '../shared/builtinMatches'
+import { useWallet } from '../contexts/WalletContext'
+import { saveTeamsToIPFS, loadTeamsFromIPFS, generateUserCID } from '../services/ipfsStorage'
 
 export function AdminPage() {
+  const { address, isConnected, isCorrectNetwork } = useWallet()
+  
   // ------------------------
-  // Local state for UI-only demo; not persisted and not on-chain
+  // Team state with IPFS persistence
   // ------------------------
   const [teamInput, setTeamInput] = React.useState('')
+  const [teamWinRate, setTeamWinRate] = React.useState('50')
+  const [teamAvgAge, setTeamAvgAge] = React.useState('26')
+  const [teamInjuries, setTeamInjuries] = React.useState('2')
+  
   const builtInTeams = React.useMemo(() => {
     // Collect unique team names from built-ins
     const set = new Set()
@@ -25,27 +34,92 @@ export function AdminPage() {
     }
     return Array.from(set)
   }, [])
+  
   const [customTeams, setCustomTeams] = React.useState([])
+  const [isLoadingTeams, setIsLoadingTeams] = React.useState(false)
 
   const allTeams = React.useMemo(() => {
-    return [...builtInTeams, ...customTeams]
+    return [...builtInTeams.map(name => ({ name })), ...customTeams]
   }, [builtInTeams, customTeams])
 
   const [teamA, setTeamA] = React.useState('')
   const [teamB, setTeamB] = React.useState('')
   const [createdMatches, setCreatedMatches] = React.useState([])
 
-  // Handle adding team into in-memory list only
-  function handleAddTeam(e) {
+  // Load teams from IPFS on wallet connect
+  React.useEffect(() => {
+    if (address && isConnected) {
+      loadTeamsFromStorage()
+    }
+  }, [address, isConnected])
+
+  const loadTeamsFromStorage = async () => {
+    setIsLoadingTeams(true)
+    try {
+      const cid = generateUserCID(address)
+      const result = await loadTeamsFromIPFS(cid)
+      if (result.success) {
+        setCustomTeams(result.teams)
+        toast.success('Teams loaded from IPFS')
+      }
+    } catch (error) {
+      console.log('No existing teams found, starting fresh')
+    } finally {
+      setIsLoadingTeams(false)
+    }
+  }
+
+  // Handle adding team with IPFS persistence
+  const handleAddTeam = async (e) => {
     e.preventDefault()
-    const name = teamInput.trim()
-    if (!name) return
-    if (allTeams.includes(name)) {
-      alert('Team already exists (built-in or added)')
+    
+    if (!address) {
+      toast.error('Please connect wallet first')
       return
     }
-    setCustomTeams((prev) => [...prev, name])
-    setTeamInput('')
+    
+    const name = teamInput.trim()
+    if (!name) {
+      toast.error('Team name is required')
+      return
+    }
+    
+    if (allTeams.some(team => team.name === name)) {
+      toast.error('Team already exists')
+      return
+    }
+    
+    setIsLoadingTeams(true)
+    
+    try {
+      const newTeam = {
+        name,
+        winRate: parseInt(teamWinRate) || 50,
+        avgAge: parseInt(teamAvgAge) || 26,
+        injuries: parseInt(teamInjuries) || 2
+      }
+      
+      const updatedTeams = [...customTeams, newTeam]
+      setCustomTeams(updatedTeams)
+      
+      // Save to IPFS
+      const result = await saveTeamsToIPFS(updatedTeams)
+      if (result.success) {
+        toast.success(`Team "${name}" added successfully!`)
+        // Reset form
+        setTeamInput('')
+        setTeamWinRate('50')
+        setTeamAvgAge('26')
+        setTeamInjuries('2')
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      toast.error(`Failed to add team: ${error.message}`)
+      console.error('Add team error:', error)
+    } finally {
+      setIsLoadingTeams(false)
+    }
   }
 
   // Create a match in local state only
@@ -67,23 +141,80 @@ export function AdminPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-semibold">Match Management</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Match Management</h1>
+        {isConnected && (
+          <div className="text-sm text-slate-400">
+            Connected as: <span className="font-mono text-slate-200">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+            {!isCorrectNetwork && (
+              <span className="ml-2 text-yellow-400">⚠️ Switch to Paseo Testnet</span>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Add Team */}
-      <GlowCard className="p-4">
-        <form onSubmit={handleAddTeam} className="flex items-center gap-3">
-          <input
-            value={teamInput}
-            onChange={(e) => setTeamInput(e.target.value)}
-            placeholder="Add Team"
-            className="flex-1 rounded-md bg-slate-900/60 border border-slate-700/60 px-3 py-2 text-slate-100 placeholder:text-slate-500"
-            title="Placeholder: add team name (no chain)"
-          />
+      <GlowCard className="p-6">
+        <h2 className="text-lg font-semibold text-slate-200 mb-4">Add New Team</h2>
+        <form onSubmit={handleAddTeam} className="space-y-4">
+          <div>
+            <label className="block text-sm text-slate-400 mb-1">Team Name</label>
+            <input
+              value={teamInput}
+              onChange={(e) => setTeamInput(e.target.value)}
+              placeholder="Enter team name"
+              className="w-full rounded-md bg-slate-900/60 border border-slate-700/60 px-3 py-2 text-slate-100 placeholder:text-slate-500"
+              required
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm text-slate-400 mb-1">Win Rate (%)</label>
+              <input
+                type="number"
+                value={teamWinRate}
+                onChange={(e) => setTeamWinRate(e.target.value)}
+                placeholder="50"
+                min="0"
+                max="100"
+                className="w-full rounded-md bg-slate-900/60 border border-slate-700/60 px-3 py-2 text-slate-100 placeholder:text-slate-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm text-slate-400 mb-1">Average Age</label>
+              <input
+                type="number"
+                value={teamAvgAge}
+                onChange={(e) => setTeamAvgAge(e.target.value)}
+                placeholder="26"
+                min="16"
+                max="50"
+                className="w-full rounded-md bg-slate-900/60 border border-slate-700/60 px-3 py-2 text-slate-100 placeholder:text-slate-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm text-slate-400 mb-1">Injured Players</label>
+              <input
+                type="number"
+                value={teamInjuries}
+                onChange={(e) => setTeamInjuries(e.target.value)}
+                placeholder="2"
+                min="0"
+                max="20"
+                className="w-full rounded-md bg-slate-900/60 border border-slate-700/60 px-3 py-2 text-slate-100 placeholder:text-slate-500"
+              />
+            </div>
+          </div>
+          
           <button
             type="submit"
-            className="rounded-md bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2"
+            disabled={isLoadingTeams}
+            className="w-full rounded-md bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-2"
           >
-            + Add Team
+            {isLoadingTeams ? 'Adding Team...' : '+ Add Team'}
           </button>
         </form>
       </GlowCard>
@@ -100,8 +231,8 @@ export function AdminPage() {
               className="w-full rounded-md bg-slate-900/60 border border-slate-700/60 px-3 py-2 text-slate-100"
             >
               <option value="">Select Team A</option>
-              {allTeams.map((name) => (
-                <option key={`A-${name}`} value={name}>{name}</option>
+              {allTeams.map((team) => (
+                <option key={`A-${team.name}`} value={team.name}>{team.name}</option>
               ))}
             </select>
           </div>
@@ -113,8 +244,8 @@ export function AdminPage() {
               className="w-full rounded-md bg-slate-900/60 border border-slate-700/60 px-3 py-2 text-slate-100"
             >
               <option value="">Select Team B</option>
-              {allTeams.map((name) => (
-                <option key={`B-${name}`} value={name}>{name}</option>
+              {allTeams.map((team) => (
+                <option key={`B-${team.name}`} value={team.name}>{team.name}</option>
               ))}
             </select>
           </div>
