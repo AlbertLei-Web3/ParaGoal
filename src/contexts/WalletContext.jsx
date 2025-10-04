@@ -4,23 +4,23 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import { web3Enable, web3Accounts } from '@polkadot/extension-dapp';
 import { ApiPromise, WsProvider } from '@polkadot/api';
 
-// Paseo Asset Hub 测试网配置（已验证）
-// English: Paseo Asset Hub testnet configuration (verified)
+// Paseo Asset Hub 测试网配置（基于钱包截图验证）
+// English: Paseo Asset Hub testnet configuration (verified from wallet screenshot)
 const paseoAssetHub = {
-  id: 1111, // Paseo Asset Hub 链ID
+  id: 1111, // 链ID（从其他来源确认）
   name: 'Paseo Asset Hub',
   network: 'paseo-asset-hub',
   nativeCurrency: {
-    decimals: 18,
+    decimals: 10, // 根据钱包截图，PAS代币小数位是10，不是18
     name: 'PAS',
     symbol: 'PAS',
   },
   rpcUrls: {
-    default: { http: [import.meta.env.VITE_PUBLIC_RPC_URL || 'https://testnet-passet-hub-eth-rpc.polkadot.io'] },
-    public: { http: [import.meta.env.VITE_PUBLIC_RPC_URL || 'https://testnet-passet-hub-eth-rpc.polkadot.io'] },
+    default: { http: [import.meta.env.VITE_PUBLIC_RPC_URL || 'wss://asset-hub-paseo-rpc.dwellir.com'] },
+    public: { http: [import.meta.env.VITE_PUBLIC_RPC_URL || 'wss://asset-hub-paseo-rpc.dwellir.com'] },
   },
   blockExplorers: {
-    default: { name: 'Paseo Asset Hub Explorer', url: 'https://paseo-asset-hub.subscan.io' },
+    default: { name: 'Paseo Asset Hub Explorer', url: 'https://assethub-paseo.subscan.io/' },
   },
   testnet: true,
 }

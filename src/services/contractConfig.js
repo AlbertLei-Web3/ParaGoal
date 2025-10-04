@@ -13,17 +13,17 @@ export const CONTRACT_ADDRESS = import.meta.env.VITE_PUBLIC_CONTRACT_ADDRESS || 
 // English: IMPORTANT: Paste your deployed Solidity contract ABI here as a JS array
 export const CONTRACT_ABI = []
 
-// 网络配置信息
-// English: Network configuration info
+// 网络配置信息（基于钱包截图验证）
+// English: Network configuration info (verified from wallet screenshot)
 export const NETWORK_CONFIG = {
   name: 'Paseo Asset Hub',
-  chainId: 1111,
+  chainId: 1111, // 链ID从其他来源确认
   nativeCurrency: {
     name: 'PAS',
     symbol: 'PAS',
-    decimals: 18
+    decimals: 10 // 根据钱包截图，PAS代币小数位是10
   },
-  rpcUrl: import.meta.env.VITE_PUBLIC_RPC_URL || 'wss://testnet-passet-hub.polkadot.io',
+  rpcUrl: import.meta.env.VITE_PUBLIC_RPC_URL || 'wss://asset-hub-paseo-rpc.dwellir.com',
   ethRpcUrl: import.meta.env.VITE_PUBLIC_ETH_RPC_URL || 'https://testnet-passet-hub-eth-rpc.polkadot.io'
 }
 
@@ -32,8 +32,8 @@ export const NETWORK_CONFIG = {
 export const WRITE_FUNC = import.meta.env.VITE_PUBLIC_WRITE_FUNC || ''
 export const READ_FUNC = import.meta.env.VITE_PUBLIC_READ_FUNC || ''
 
-// 浏览器URL（Paseo Asset Hub Subscan）
-// English: Explorer URL (Paseo Asset Hub Subscan)
-export const EXPLORER_BASE_URL = import.meta.env.VITE_PUBLIC_EXPLORER_URL || 'https://paseo-asset-hub.subscan.io'
+// 浏览器URL（基于钱包截图中的实际URL）
+// English: Explorer URL (based on actual URL from wallet screenshot)
+export const EXPLORER_BASE_URL = import.meta.env.VITE_PUBLIC_EXPLORER_URL || 'https://assethub-paseo.subscan.io/'
 
 

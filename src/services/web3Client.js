@@ -12,9 +12,9 @@ export async function getApi() {
   }
 
   try {
-    // 获取RPC URL，从环境变量中读取，如果未设置则使用Paseo Asset Hub测试网URL
-    // English: Get RPC URL from environment, default to Paseo Asset Hub testnet if not set
-    const rpc = import.meta.env.VITE_PUBLIC_RPC_URL || 'wss://testnet-passet-hub.polkadot.io';
+    // 获取RPC URL，从环境变量中读取，如果未设置则使用钱包截图中的RPC端点
+    // English: Get RPC URL from environment, default to RPC endpoint from wallet screenshot
+    const rpc = import.meta.env.VITE_PUBLIC_RPC_URL || 'wss://asset-hub-paseo-rpc.dwellir.com';
     
     // 创建WebSocket提供者
     // English: Create WebSocket provider
