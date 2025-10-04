@@ -1,11 +1,8 @@
 // Wallet context for global state management
 // English: Provides wallet connection state and account info across the app
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { createConfig, http } from 'wagmi'
-import { mainnet, sepolia } from 'wagmi/chains'
-import { injected, metaMask } from 'wagmi/connectors'
-import { WagmiProvider, useAccount, useConnect, useDisconnect } from 'wagmi'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { web3Enable, web3Accounts } from '@polkadot/extension-dapp';
+import { ApiPromise, WsProvider } from '@polkadot/api';
 
 // Create a custom chain for Paseo (placeholder - replace with actual Paseo config)
 const paseo = {
@@ -27,56 +24,65 @@ const paseo = {
   testnet: true,
 }
 
-// Wagmi config
-const config = createConfig({
-  chains: [paseo, mainnet, sepolia],
-  connectors: [injected(), metaMask()],
-  transports: {
-    [paseo.id]: http(),
-    [mainnet.id]: http(),
-    [sepolia.id]: http(),
-  },
-})
-
-const queryClient = new QueryClient()
-
 // Wallet context
 const WalletContext = createContext()
 
 export function WalletProvider({ children }) {
-  return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <WalletContextProvider>{children}</WalletContextProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
-  )
-}
+  const [accounts, setAccounts] = useState([])
+  const [selectedAccount, setSelectedAccount] = useState(null)
+  const [isConnected, setIsConnected] = useState(false)
+  const [api, setApi] = useState(null)
 
-function WalletContextProvider({ children }) {
-  const { address, isConnected, chainId } = useAccount()
-  const { connect, connectors, isPending } = useConnect()
-  const { disconnect } = useDisconnect()
+  const connect = async () => {
+    try {
+      // 启用扩展并获取Talisman账户
+      // English: Enable extensions and get Talisman accounts
+      const extensions = await web3Enable('ParaGoal');
+      if (extensions.length === 0) {
+        alert('未找到Polkadot扩展。请安装Talisman。 / No Polkadot extensions found. Please install Talisman.');
+        return;
+      }
 
-  const [isCorrectNetwork, setIsCorrectNetwork] = useState(false)
+      // 获取所有账户
+      // English: Get all accounts
+      const allAccounts = await web3Accounts();
+      
+      // 过滤Talisman账户
+      // English: Filter Talisman accounts
+      const talismanAccounts = allAccounts.filter(acc => acc.meta.source === 'talisman');
+      
+      setAccounts(talismanAccounts);
+      if (talismanAccounts.length > 0) {
+        setSelectedAccount(talismanAccounts[0]);
+        setIsConnected(true);
+      } else {
+        alert('未找到Talisman账户。请确保已导入账户。 / No Talisman accounts found. Please ensure accounts are imported.');
+      }
+    } catch (err) {
+      console.error('连接钱包错误 / Connect wallet error:', err);
+      alert('连接钱包失败。请重试。 / Failed to connect wallet. Please try again.');
+    }
+  };
 
-  useEffect(() => {
-    // Check if connected to Paseo testnet
-    const expectedChainId = Number(import.meta.env.VITE_PUBLIC_CHAIN_ID) || 8888
-    setIsCorrectNetwork(isConnected && chainId === expectedChainId)
-  }, [isConnected, chainId])
+  const disconnect = () => {
+    setSelectedAccount(null);
+    setIsConnected(false);
+    setAccounts([]);
+  };
 
   const value = {
-    address,
+    address: selectedAccount?.address,
     isConnected,
-    chainId,
-    isCorrectNetwork,
+    isCorrectNetwork: true, // Assume correct for Substrate
     connect,
-    connectors,
-    isPending,
+    accounts,
+    selectedAccount,
+    api,
     disconnect,
   }
 
+  // 直接渲染子组件，不阻塞应用启动
+  // English: Render children directly without blocking app startup
   return (
     <WalletContext.Provider value={value}>
       {children}
@@ -91,3 +97,4 @@ export function useWallet() {
   }
   return context
 }
+

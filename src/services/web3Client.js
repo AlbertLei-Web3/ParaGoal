@@ -1,12 +1,33 @@
-// Minimal viem client setup (UI placeholder until contract is ready)
-import { createPublicClient, http } from 'viem'
+// web3Client.js - 简化的Polkadot API连接
+// English: Simplified Polkadot API connection for Paseo testnet
+import { ApiPromise, WsProvider } from '@polkadot/api';
 
-export function getPublicClient() {
-  const rpc = import.meta.env.VITE_PUBLIC_RPC_URL
-  if (!rpc) {
-    throw new Error('VITE_PUBLIC_RPC_URL is not set')
+let apiInstance = null;
+
+export async function getApi() {
+  // 如果API实例已存在，直接返回
+  // English: If API instance already exists, return it directly
+  if (apiInstance) {
+    return apiInstance;
   }
-  return createPublicClient({ transport: http(rpc) })
+
+  try {
+    // 获取RPC URL，从环境变量中读取，如果未设置则使用默认Paseo测试网URL
+    // English: Get RPC URL from environment, default to Paseo testnet if not set
+    const rpc = import.meta.env.VITE_PUBLIC_RPC_URL || 'wss://paseo-rpc.polkadot.io';
+    
+    // 创建WebSocket提供者
+    // English: Create WebSocket provider
+    const provider = new WsProvider(rpc);
+    
+    // 创建并缓存ApiPromise实例，允许与链交互
+    // English: Create and cache ApiPromise instance for chain interactions
+    apiInstance = await ApiPromise.create({ provider });
+    return apiInstance;
+  } catch (error) {
+    console.error('API连接错误 / API connection error:', error);
+    throw error;
+  }
 }
 
 

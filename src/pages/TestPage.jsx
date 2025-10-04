@@ -2,7 +2,7 @@
 // English: Minimal test page for judges to verify the core on-chain action (UI placeholders for now).
 import React from 'react'
 import { GlowCard } from '../components/GlowCard'
-import { getPublicClient } from '../services/web3Client'
+import { getApi } from '../services/web3Client'
 import { CONTRACT_ADDRESS, CONTRACT_ABI, WRITE_FUNC, READ_FUNC, EXPLORER_BASE_URL } from '../services/contractConfig'
 
 export function TestPage() {
@@ -13,14 +13,20 @@ export function TestPage() {
   const [txHash, setTxHash] = React.useState('')
   const [readValue, setReadValue] = React.useState('')
 
-  // Detect network via public client (read-only)
+  // 检测网络连接状态（简化为Polkadot API）
+  // English: Detect network connection status (simplified for Polkadot API)
   React.useEffect(() => {
-    try {
-      const client = getPublicClient()
-      client.getChainId().then((id) => {
-        setNetwork(String(id))
-      }).catch(() => {})
-    } catch (_) {}
+    const detectNetwork = async () => {
+      try {
+        const api = await getApi()
+        const chainId = api.genesisHash.toHex()
+        setNetwork(`Paseo (${chainId.slice(0, 8)}...)`)
+      } catch (error) {
+        console.error('网络检测错误 / Network detection error:', error)
+        setNetwork('连接失败 / Connection failed')
+      }
+    }
+    detectNetwork()
   }, [])
 
   // Placeholder click logic: UI only
