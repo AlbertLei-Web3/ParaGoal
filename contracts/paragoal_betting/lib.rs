@@ -130,6 +130,7 @@ mod paragoal_betting {
         matches: Mapping<u128, Match>,                    // 比赛映射 / Matches mapping
         stakes: Mapping<(u128, AccountId), Stake>,        // 投注记录 / Stakes mapping (match_id, user)
         fee_receiver: Mapping<u128, AccountId>,           // 每个比赛的手续费接收者 / Fee receiver per match
+        deployer: AccountId,
     }
 
     impl ParaGoalBetting {
@@ -172,6 +173,7 @@ mod paragoal_betting {
                     is_built_in: true,
                 });
             }
+            instance.deployer = Self::env().caller();
             instance
         }
 
@@ -339,7 +341,12 @@ mod paragoal_betting {
             } else {
                 (match_data.pool_amount * 30) / 100
             };
-            let user_pool = (stake.amount.checked_mul(pool_share).expect("Overflow") / total_stake_team);
+            let user_pool: Balance;
+            if total_stake_team == 0 {
+                user_pool = 0;  // 或返回本金 / Or return principal only
+            } else {
+                user_pool = (stake.amount.checked_mul(pool_share).expect("Overflow") / total_stake_team);
+            }
             let user_share = stake.amount.checked_add(user_pool).expect("Overflow");
             let fee = (user_share.checked_mul(5).expect("Overflow") / 100);
             let payout = user_share.checked_sub(fee).expect("Underflow");
@@ -365,6 +372,57 @@ mod paragoal_betting {
                 user: caller,
                 amount: payout,
             });
+        }
+
+        // 新函数: 提取未领取奖励 / Function: Withdraw Unclaimed
+        // 中文: 仅管理员可调用，提取指定用户未领取的奖励到管理员地址（防止资金锁定）。初学者: 这是一个可选的回收机制，只在Settled后有效。
+        // English: Only admin can call, withdraws unclaimed payout for a user to admin address (prevent locked funds). For beginners: This is an optional recovery mechanism, valid only after Settled.
+        #[ink(message)]
+        pub fn withdraw_unclaimed(&mut self, match_id: u128, user: AccountId) {
+            let mut match_data = self.matches.get(&match_id).expect("Match not found");
+            assert!(match_data.admin == self.env().caller(), "Only admin");
+            assert!(match_data.status == MatchStatus::Settled, "Not settled");
+
+            let key = (match_id, user);
+            let mut stake = self.stakes.get(&key).expect("No stake");
+            assert!(!stake.claimed, "Already claimed");
+
+            // 计算用户份额（同claim_payout逻辑） / Calculate user share (same as claim_payout)
+            let is_winner = if match_data.result == MatchResult::TeamA {
+                stake.team == Team::TeamA
+            } else {
+                stake.team == Team::TeamB
+            };
+
+            let total_stake_team = if stake.team == Team::TeamA {
+                match_data.total_stake_a
+            } else {
+                match_data.total_stake_b
+            };
+            assert!(total_stake_team > 0, "No stakes for team");
+
+            let user_pool: Balance;
+            if total_stake_team == 0 {
+                user_pool = 0;  // 或返回本金 / Or return principal only
+            } else {
+                user_pool = (stake.amount.checked_mul(if is_winner { (match_data.pool_amount * 70) / 100 } else { (match_data.pool_amount * 30) / 100 }).expect("Overflow") / total_stake_team);
+            }
+            let user_share = stake.amount.checked_add(user_pool).expect("Overflow");
+            let fee = (user_share.checked_mul(5).expect("Overflow") / 100);
+            let payout = user_share.checked_sub(fee).expect("Underflow");
+
+            // 转账到管理员（而非用户） / Transfer to admin (instead of user)
+            self.env().transfer(match_data.admin, payout).expect("Transfer failed");
+
+            // 手续费仍给接收者 / Fee still to receiver
+            if let Some(receiver) = self.fee_receiver.get(&match_id) {
+                self.env().transfer(receiver, fee).expect("Fee transfer failed");
+            }
+
+            stake.claimed = true;  // 标记为已处理 / Mark as handled
+            self.stakes.insert(key, &stake);
+
+            // 可添加事件 / Can add event if needed
         }
 
         // 查看函数: 获取比赛信息 / View Function: Get Match
@@ -395,6 +453,22 @@ mod paragoal_betting {
             match_data.team_b = new_team_b;
             self.matches.insert(match_id, &match_data);
             // Emit event if needed, e.g., TeamUpdated
+        }
+
+        // Add new function: emergency_withdraw (only deployer or admin, for all matches)
+        // 中文: 紧急提取合约余额到指定地址，仅部署者调用。初学者: 用于极端情况回收资金。
+        // English: Emergency withdraw contract balance to specified address, only by deployer. For beginners: For extreme cases to recover funds.
+        #[ink(message)]
+        pub fn emergency_withdraw(&mut self, to: AccountId, amount: Balance) {
+            // 只允许合约部署者 / Only contract deployer
+            // 假设添加一个deployer存储 / Assume adding a deployer in storage
+            // 先在storage添加: deployer: AccountId,
+            // 在new(): instance.deployer = Self::env().caller();
+
+            assert!(self.deployer == self.env().caller(), "Only deployer");
+            let balance = self.env().balance();
+            assert!(amount <= balance, "Insufficient balance");
+            self.env().transfer(to, amount).expect("Transfer failed");
         }
     }
 }
