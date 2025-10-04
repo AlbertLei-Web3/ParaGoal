@@ -8,7 +8,6 @@
 
 #[ink::contract]
 mod paragoal_betting {
-    use ink::prelude::collections::BTreeMap;
     use ink::prelude::vec::Vec;
     use ink::storage::Mapping;
 
@@ -221,7 +220,7 @@ mod paragoal_betting {
                 match_data.pool_injected_by = Some(self.env().caller());
                 self.fee_receiver.insert(match_id, &self.env().caller());
             }
-            match_data.pool_amount += injected;
+            match_data.pool_amount = match_data.pool_amount.checked_add(injected).expect("Overflow");
             self.matches.insert(match_id, &match_data);
 
             self.env().emit_event(PoolInjected {
@@ -276,13 +275,13 @@ mod paragoal_betting {
                 claimed: false,
             });
             assert!(stake.team == team, "Cannot change team");  // 防止切换队伍 / Prevent team switch
-            stake.amount += amount;
+            stake.amount = stake.amount.checked_add(amount).expect("Overflow");
             self.stakes.insert(key, &stake);
 
             if team == Team::TeamA {
-                match_data.total_stake_a += amount;
+                match_data.total_stake_a = match_data.total_stake_a.checked_add(amount).expect("Overflow");
             } else {
-                match_data.total_stake_b += amount;
+                match_data.total_stake_b = match_data.total_stake_b.checked_add(amount).expect("Overflow");
             }
             self.matches.insert(match_id, &match_data);
 
@@ -340,16 +339,23 @@ mod paragoal_betting {
             } else {
                 (match_data.pool_amount * 30) / 100
             };
-            let user_share = stake.amount + (user_ratio * pool_share);
-            let fee = (user_share * 5) / 100;
-            let payout = user_share - fee;
+            let user_pool = (stake.amount.checked_mul(pool_share).expect("Overflow") / total_stake_team);
+            let user_share = stake.amount.checked_add(user_pool).expect("Overflow");
+            let fee = (user_share.checked_mul(5).expect("Overflow") / 100);
+            let payout = user_share.checked_sub(fee).expect("Underflow");
 
             // 转账给用户 / Transfer to user
             self.env().transfer(caller, payout).expect("Transfer failed");
 
             // 手续费给接收者 / Fee to receiver
-            let fee_receiver = self.fee_receiver.get(&match_id).expect("No fee receiver");
-            self.env().transfer(fee_receiver, fee).expect("Fee transfer failed");
+            let fee_receiver = self.fee_receiver.get(&match_id);
+            if let Some(receiver) = fee_receiver {
+                self.env().transfer(receiver, fee).expect("Fee transfer failed");
+            } else {
+                // No injection, no fee receiver, perhaps keep fee in contract or zero
+                // For now, transfer to caller or skip; design assumes injection, so assert
+                assert!(false, "No fee receiver set");
+            }
 
             stake.claimed = true;
             self.stakes.insert(key, &stake);
@@ -376,5 +382,19 @@ mod paragoal_betting {
         }
 
         // 其他函数可根据需要添加 / Additional functions can be added as needed
+
+        // Add missing function: update_match_teams (only admin, in Pending)
+        // 中文: 仅admin可调用，更新队伍信息，在Pending状态。初学者: 这允许修改队伍标识。
+        // English: Only admin can call, updates team info in Pending status. For beginners: Allows modifying team identifiers.
+        #[ink(message)]
+        pub fn update_match_teams(&mut self, match_id: u128, new_team_a: [u8; 32], new_team_b: [u8; 32]) {
+            let mut match_data = self.matches.get(&match_id).expect("Match not found");
+            assert!(match_data.admin == self.env().caller(), "Only admin");
+            assert!(match_data.status == MatchStatus::Pending, "Can only update in Pending");
+            match_data.team_a = new_team_a;
+            match_data.team_b = new_team_b;
+            self.matches.insert(match_id, &match_data);
+            // Emit event if needed, e.g., TeamUpdated
+        }
     }
 }
