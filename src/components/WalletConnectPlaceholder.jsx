@@ -44,8 +44,7 @@ export function WalletConnectPlaceholder() {
   return (
     <button
       onClick={() => connect()}
-      disabled={accounts?.length === 0} // 检查是否有可用的Talisman账户
-      className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-full text-white disabled:opacity-50"
+      className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-full text-white"
     >
       <FaWallet className="mr-2" />
       Connect Talisman
