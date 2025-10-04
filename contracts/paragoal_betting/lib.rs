@@ -42,6 +42,7 @@ mod paragoal_betting {
         None,    // 未结算 / Not settled
         TeamA,   // TeamA获胜 / TeamA wins
         TeamB,   // TeamB获胜 / TeamB wins
+        Draw,    // 平局 / Draw
     }
 
     // 结构体定义: 比赛 / Struct: Match
@@ -324,19 +325,25 @@ mod paragoal_betting {
 
             let is_winner = if match_data.result == MatchResult::TeamA {
                 stake.team == Team::TeamA
+            } else if match_data.result == MatchResult::Draw {
+                stake.team == Team::TeamA || stake.team == Team::TeamB
             } else {
                 stake.team == Team::TeamB
             };
 
             let total_stake_team = if stake.team == Team::TeamA {
                 match_data.total_stake_a
-            } else {
+            } else if stake.team == Team::TeamB {
                 match_data.total_stake_b
+            } else {
+                0 // Draw, total stake is 0
             };
             assert!(total_stake_team > 0, "No stakes for team");
 
             let user_ratio = stake.amount / total_stake_team;  // 用户比例 / User ratio
-            let pool_share = if is_winner {
+            let pool_share = if match_data.result == MatchResult::Draw {
+                (match_data.pool_amount * 50) / 100  // 平分 / 50% split
+            } else if is_winner {
                 (match_data.pool_amount * 70) / 100
             } else {
                 (match_data.pool_amount * 30) / 100
@@ -390,14 +397,18 @@ mod paragoal_betting {
             // 计算用户份额（同claim_payout逻辑） / Calculate user share (same as claim_payout)
             let is_winner = if match_data.result == MatchResult::TeamA {
                 stake.team == Team::TeamA
+            } else if match_data.result == MatchResult::Draw {
+                stake.team == Team::TeamA || stake.team == Team::TeamB
             } else {
                 stake.team == Team::TeamB
             };
 
             let total_stake_team = if stake.team == Team::TeamA {
                 match_data.total_stake_a
-            } else {
+            } else if stake.team == Team::TeamB {
                 match_data.total_stake_b
+            } else {
+                0 // Draw, total stake is 0
             };
             assert!(total_stake_team > 0, "No stakes for team");
 
@@ -405,7 +416,13 @@ mod paragoal_betting {
             if total_stake_team == 0 {
                 user_pool = 0;  // 或返回本金 / Or return principal only
             } else {
-                user_pool = (stake.amount.checked_mul(if is_winner { (match_data.pool_amount * 70) / 100 } else { (match_data.pool_amount * 30) / 100 }).expect("Overflow") / total_stake_team);
+                user_pool = (stake.amount.checked_mul(if match_data.result == MatchResult::Draw {
+                    (match_data.pool_amount * 50) / 100
+                } else if is_winner {
+                    (match_data.pool_amount * 70) / 100
+                } else {
+                    (match_data.pool_amount * 30) / 100
+                }).expect("Overflow") / total_stake_team);
             }
             let user_share = stake.amount.checked_add(user_pool).expect("Overflow");
             let fee = (user_share.checked_mul(5).expect("Overflow") / 100);
