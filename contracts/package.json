@@ -1,0 +1,29 @@
+{
+  "name": "paragoal-contracts",
+  "version": "1.0.0",
+  "description": "ParaGoal智能合约 - 基于Polkadot Paseo的去中心化体育博彩平台",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:paseo": "hardhat run scripts/deploy.js --network paseo",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "verify": "hardhat verify --network paseo"
+  },
+  "keywords": [
+    "blockchain",
+    "smart-contracts",
+    "polkadot",
+    "paseo",
+    "sports-betting",
+    "defi"
+  ],
+  "author": "ParaGoal Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@openzeppelin/contracts": "^5.0.0",
+    "hardhat": "^2.19.0",
+    "dotenv": "^16.3.1"
+  }
+}

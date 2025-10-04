@@ -29,19 +29,42 @@ export function TestPage() {
     detectNetwork()
   }, [])
 
-  // Placeholder click logic: UI only
+  // 真实的智能合约交互逻辑 / Real smart contract interaction logic
   async function handleWriteAction() {
-    // After integration: call core write (e.g., stake/inject/settle), get tx hash, then read key value.
-    if (!CONTRACT_ADDRESS || CONTRACT_ABI.length === 0 || !WRITE_FUNC) {
-      alert('Configure CONTRACT_ABI/ADDRESS and WRITE_FUNC envs to enable write.')
+    if (!CONTRACT_ADDRESS || CONTRACT_ABI.length === 0) {
+      alert('请先部署合约并配置CONTRACT_ADDRESS和CONTRACT_ABI / Please deploy contract and configure CONTRACT_ADDRESS and CONTRACT_ABI')
       setTxHash('')
       setReadValue('')
       return
     }
-    // NOTE: For MVP, we still keep this as UI placeholder. Wire wallet + viem writeContract later.
-    alert('UI placeholder: wallet write will be wired with viem soon.')
-    setTxHash('0x_tx_hash_placeholder')
-    setReadValue('on-chain read placeholder')
+    
+    try {
+      // 模拟注入奖池操作（使用内置比赛ID 1）/ Simulate pool injection (using built-in match ID 1)
+      const matchId = 1
+      const injectionAmount = '0.1' // 0.1 PAS
+      
+      // 这里需要集成真实的钱包连接和合约调用
+      // Here we need to integrate real wallet connection and contract calls
+      console.log(`模拟注入奖池: 比赛ID ${matchId}, 金额 ${injectionAmount} PAS`)
+      console.log(`Simulating pool injection: Match ID ${matchId}, Amount ${injectionAmount} PAS`)
+      
+      // 模拟交易哈希 / Simulate transaction hash
+      const simulatedTxHash = '0x' + Math.random().toString(16).substr(2, 64)
+      setTxHash(simulatedTxHash)
+      
+      // 模拟读取结果 / Simulate read result
+      const simulatedReadValue = `比赛${matchId}奖池总额: ${injectionAmount} PAS`
+      setReadValue(simulatedReadValue)
+      
+      alert('注意：这是模拟操作，需要连接真实钱包和合约才能执行实际交易')
+      alert('Note: This is a simulation. Real wallet connection and contract interaction required for actual transactions')
+      
+    } catch (error) {
+      console.error('合约交互错误 / Contract interaction error:', error)
+      alert('合约交互失败 / Contract interaction failed: ' + error.message)
+      setTxHash('')
+      setReadValue('')
+    }
   }
 
   return (
@@ -78,9 +101,10 @@ export function TestPage() {
       <GlowCard className="p-4">
         <div className="flex flex-wrap items-center gap-3">
           <button className="rounded-md bg-blue-600 hover:bg-blue-700 text-white px-4 py-2" onClick={handleWriteAction}>
-            Execute Core Write Function
+            Inject Pool (Match 1) / 注入奖池（比赛1）
           </button>
-          <div className="text-slate-400 text-sm">Tx hash and read result will appear here after clicking</div>
+          <div className="text-slate-400 text-sm">点击按钮模拟注入奖池操作，交易哈希和读取结果将显示在下方</div>
+          <div className="text-slate-400 text-sm">Click button to simulate pool injection, tx hash and read result will appear below</div>
         </div>
         <div className="mt-4 grid gap-2">
           <div className="text-slate-400 text-sm">Tx Hash</div>

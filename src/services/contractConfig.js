@@ -11,7 +11,23 @@ export const CONTRACT_ADDRESS = import.meta.env.VITE_PUBLIC_CONTRACT_ADDRESS || 
 // English: Contract ABI (fill after deployment)
 // IMPORTANT: 将部署后的Solidity合约ABI粘贴到这里作为JS数组
 // English: IMPORTANT: Paste your deployed Solidity contract ABI here as a JS array
-export const CONTRACT_ABI = []
+export const CONTRACT_ABI = [
+  // ParaGoalBetting合约ABI将在这里
+  // ParaGoalBetting contract ABI will be here
+  "function createMatch(bytes32 teamA, bytes32 teamB) external returns (uint256)",
+  "function injectPool(uint256 matchId) external payable",
+  "function stake(uint256 matchId, uint8 team) external payable",
+  "function getMatch(uint256 matchId) external view returns (tuple(uint256 id, address admin, bytes32 teamA, bytes32 teamB, bool isBuiltIn, address poolInjector, uint256 poolAmount, uint8 status, uint8 result, uint256 createdAt, uint256 closedAt, uint256 settledAt))",
+  "function getUserStake(uint256 matchId, address user) external view returns (tuple(uint256 matchId, address user, uint8 team, uint256 amount, bool claimed, uint256 stakedAt))",
+  "function calculatePayout(uint256 matchId, address user) external view returns (uint256)",
+  "function isMatchAdmin(uint256 matchId, address user) external view returns (bool)",
+  "function nextMatchId() external view returns (uint256)",
+  "event MatchCreated(uint256 indexed matchId, address indexed admin, bytes32 teamA, bytes32 teamB, bool isBuiltIn)",
+  "event PoolInjected(uint256 indexed matchId, address indexed from, uint256 amount, uint256 totalPool, address indexed feeReceiver)",
+  "event Staked(uint256 indexed matchId, address indexed user, uint8 team, uint256 amount)",
+  "event MatchSettled(uint256 indexed matchId, uint8 result)",
+  "event PayoutClaimed(uint256 indexed matchId, address indexed user, uint256 payout)"
+]
 
 // 网络配置信息（基于钱包截图验证）
 // English: Network configuration info (verified from wallet screenshot)
