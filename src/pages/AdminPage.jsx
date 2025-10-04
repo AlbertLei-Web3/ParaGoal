@@ -122,11 +122,41 @@ export function AdminPage() {
     }
   }
 
+  // Handle deleting a custom team
+  const handleDeleteTeam = async (teamToDelete) => {
+    if (!address) {
+      toast.error('Please connect wallet first')
+      return
+    }
+
+    setIsLoadingTeams(true)
+    
+    try {
+      const updatedTeams = customTeams.filter(team => team.name !== teamToDelete)
+      setCustomTeams(updatedTeams)
+      
+      // Save to IPFS
+      const result = await saveTeamsToIPFS(updatedTeams)
+      if (result.success) {
+        toast.success(`Team "${teamToDelete}" deleted successfully!`)
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      toast.error(`Failed to delete team: ${error.message}`)
+      console.error('Delete team error:', error)
+      // Revert state on error
+      setCustomTeams(customTeams)
+    } finally {
+      setIsLoadingTeams(false)
+    }
+  }
+
   // Create a match in local state only
   function handleCreateMatch(e) {
     e.preventDefault()
     if (!teamA || !teamB || teamA === teamB) {
-      alert('Please select two different teams (A and B)')
+      toast.error('Please select two different teams (A and B)')
       return
     }
     setCreatedMatches((prev) => [
@@ -134,6 +164,7 @@ export function AdminPage() {
       { id: `local-${Date.now()}`, teamA, teamB },
       ...prev,
     ])
+    toast.success('Match created successfully!')
     // Reset selects
     setTeamA('')
     setTeamB('')
@@ -254,6 +285,38 @@ export function AdminPage() {
           </div>
         </form>
       </GlowCard>
+
+      {/* Custom Teams List */}
+      <div className="space-y-3">
+        <h2 className="text-xl font-semibold">Your Custom Teams</h2>
+        {customTeams.length === 0 ? (
+          <GlowCard className="p-4 text-center text-slate-400">
+            No custom teams yet. Add your first team above!
+          </GlowCard>
+        ) : (
+          <div className="grid gap-3">
+            {customTeams.map((team) => (
+              <GlowCard key={team.name} className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="text-slate-100 font-medium text-lg">{team.name}</div>
+                    <div className="text-sm text-slate-400 mt-1">
+                      Win Rate: {team.winRate}% • Avg Age: {team.avgAge} • Injuries: {team.injuries}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteTeam(team.name)}
+                    disabled={isLoadingTeams}
+                    className="ml-4 px-3 py-1 rounded bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm"
+                  >
+                    {isLoadingTeams ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </GlowCard>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Existing Matches */}
       <div className="space-y-3">
