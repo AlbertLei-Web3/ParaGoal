@@ -12,7 +12,7 @@ import toast from 'react-hot-toast'
 import { GlowCard } from '../components/GlowCard'
 import { BUILT_IN_MATCHES } from '../shared/builtinMatches'
 import { useWallet } from '../contexts/WalletContext'
-import { saveTeamsToIPFS, loadTeamsFromIPFS, generateUserCID } from '../services/ipfsStorage'
+import { saveTeamsToIPFS, loadTeamsFromIPFS, saveMatchesToIPFS, loadMatchesFromIPFS, generateUserCID } from '../services/ipfsStorage'
 
 export function AdminPage() {
   const { address, isConnected, isCorrectNetwork } = useWallet()
@@ -46,10 +46,12 @@ export function AdminPage() {
   const [teamB, setTeamB] = React.useState('')
   const [createdMatches, setCreatedMatches] = React.useState([])
 
-  // Load teams from IPFS on wallet connect
+  // Load teams and matches from localStorage on wallet connect
+  // 钱包连接时从本地存储加载队伍和比赛数据
   React.useEffect(() => {
     if (address && isConnected) {
       loadTeamsFromStorage()
+      loadMatchesFromStorage()
     }
   }, [address, isConnected])
 
@@ -67,6 +69,20 @@ export function AdminPage() {
       console.log('No existing teams found, starting fresh')
     } finally {
       setIsLoadingTeams(false)
+    }
+  }
+
+  const loadMatchesFromStorage = async () => {
+    try {
+      const result = await loadMatchesFromIPFS()
+      if (result.success) {
+        setCreatedMatches(result.matches)
+        if (result.matches.length > 0) {
+          toast.success('Matches loaded from local storage')
+        }
+      }
+    } catch (error) {
+      console.log('No existing matches found, starting fresh')
     }
   }
 
@@ -153,22 +169,47 @@ export function AdminPage() {
     }
   }
 
-  // Create a match in local state only
-  function handleCreateMatch(e) {
+  // Create a match and save to localStorage
+  // 创建比赛并保存到本地存储
+  const handleCreateMatch = async (e) => {
     e.preventDefault()
     if (!teamA || !teamB || teamA === teamB) {
       toast.error('Please select two different teams (A and B)')
       return
     }
-    setCreatedMatches((prev) => [
-      // Temp id for UI-only
-      { id: `local-${Date.now()}`, teamA, teamB },
-      ...prev,
-    ])
-    toast.success('Match created successfully!')
-    // Reset selects
-    setTeamA('')
-    setTeamB('')
+    
+    if (!address) {
+      toast.error('Please connect wallet first')
+      return
+    }
+    
+    try {
+      const newMatch = {
+        id: `local-${Date.now()}`,
+        teamA,
+        teamB,
+        createdAt: Date.now()
+      }
+      
+      const updatedMatches = [newMatch, ...createdMatches]
+      setCreatedMatches(updatedMatches)
+      
+      // Save to localStorage
+      // 保存到本地存储
+      const result = await saveMatchesToIPFS(updatedMatches)
+      if (result.success) {
+        toast.success('Match created successfully!')
+        // Reset selects
+        // 重置选择
+        setTeamA('')
+        setTeamB('')
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      toast.error(`Failed to create match: ${error.message}`)
+      console.error('Create match error:', error)
+    }
   }
 
   return (
