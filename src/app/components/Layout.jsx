@@ -6,9 +6,11 @@ import { Link, useLocation } from 'react-router-dom'
 import { WalletConnectPlaceholder } from '../../components/WalletConnectPlaceholder'
 import { AdminFabPlaceholder } from '../../components/AdminFabPlaceholder'
 import { PitchBackground } from '../../components/PitchBackground'
+import { useWallet } from '../../contexts/WalletContext';
 
 export function Layout({ children }) {
   const location = useLocation()
+  const { address } = useWallet();
   return (
     <div className="min-h-screen flex flex-col">
       <PitchBackground />
@@ -22,6 +24,7 @@ export function Layout({ children }) {
               <Link className={`px-2 py-1 rounded hover:bg-slate-800 ${location.pathname.startsWith('/admin')?'text-yellow-400':''}`} to="/admin">Admin</Link>
               <Link className={`px-2 py-1 rounded hover:bg-slate-800 ${location.pathname.startsWith('/test')?'text-yellow-400':''}`} to="/test">Test</Link>
             </nav>
+            {address && <div className="text-slate-400 text-sm">Connected: {address.slice(0,6)}...{address.slice(-4)}</div>}
             <WalletConnectPlaceholder />
           </div>
         </div>

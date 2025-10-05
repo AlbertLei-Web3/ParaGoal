@@ -11,7 +11,8 @@ export function WalletConnectPlaceholder() {
     isCorrectNetwork, 
     connect, 
     accounts, // Changed from connectors
-    disconnect 
+    disconnect,
+    switchAccount
   } = useWallet()
 
   // 如果网络不正确，显示警告组件
@@ -29,13 +30,28 @@ export function WalletConnectPlaceholder() {
   // English: If connected, show disconnect button
   if (isConnected) {
     return (
-      <button
-        onClick={() => disconnect()}
-        className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 rounded-full text-white"
-      >
-        <FaWallet className="mr-2" />
-        Disconnect {address ? `${address.slice(0,6)}...${address.slice(-4)}` : ''}
-      </button>
+      <div className="flex items-center gap-2">
+        {accounts.length > 1 && (
+          <select
+            value={address}
+            onChange={(e) => switchAccount(e.target.value)}
+            className="px-2 py-1 bg-slate-800 text-white rounded"
+          >
+            {accounts.map(acc => (
+              <option key={acc.address} value={acc.address}>
+                {acc.meta.name || 'Unnamed'} ({acc.address.slice(0,6)}...{acc.address.slice(-4)})
+              </option>
+            ))}
+          </select>
+        )}
+        <button
+          onClick={() => disconnect()}
+          className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 rounded-full text-white"
+        >
+          <FaWallet className="mr-2" />
+          Disconnect {address ? `(${address.slice(0,6)}...${address.slice(-4)})` : ''}
+        </button>
+      </div>
     )
   }
 

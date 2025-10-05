@@ -1,7 +1,7 @@
 // Wallet context for global state management
 // English: Provides wallet connection state and account info across the app
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { web3Enable, web3Accounts } from '@polkadot/extension-dapp';
+import { web3Enable, web3Accounts, web3AccountsSubscribe } from '@polkadot/extension-dapp';
 import { ApiPromise, WsProvider } from '@polkadot/api';
 
 // Paseo Asset Hub 测试网配置（基于钱包截图验证）
@@ -34,6 +34,35 @@ export function WalletProvider({ children }) {
   const [isConnected, setIsConnected] = useState(false)
   const [api, setApi] = useState(null)
 
+  useEffect(() => {
+    let unsubscribe;
+    const subscribe = async () => {
+      unsubscribe = await web3AccountsSubscribe((injectedAccounts) => {
+        console.log('Accounts updated:', injectedAccounts);
+        setAccounts(injectedAccounts);
+        if (injectedAccounts.length > 0) {
+          if (selectedAccount && injectedAccounts.some(acc => acc.address === selectedAccount.address)) {
+            // Keep current
+          } else {
+            setSelectedAccount(injectedAccounts[0]);
+          }
+          setIsConnected(true);
+        } else {
+          setSelectedAccount(null);
+          setIsConnected(false);
+        }
+      });
+    };
+
+    if (isConnected) {
+      subscribe();
+    }
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [isConnected]);
+
   const connect = async () => {
     try {
       // 启用扩展并获取Talisman账户
@@ -52,10 +81,11 @@ export function WalletProvider({ children }) {
       // English: Filter Talisman accounts
       const talismanAccounts = allAccounts.filter(acc => acc.meta.source === 'talisman');
       
-      setAccounts(talismanAccounts);
-      if (talismanAccounts.length > 0) {
-        setSelectedAccount(talismanAccounts[0]);
+      setAccounts(allAccounts);
+      if (allAccounts.length > 0) {
+        setSelectedAccount(allAccounts[0]);
         setIsConnected(true);
+        subscribe(); // Add this to start subscription immediately
       } else {
         alert('未找到Talisman账户。请确保已导入账户。 / No Talisman accounts found. Please ensure accounts are imported.');
       }
@@ -80,6 +110,11 @@ export function WalletProvider({ children }) {
     selectedAccount,
     api,
     disconnect,
+    switchAccount: (address) => {
+      console.log('Switching to address:', address);
+      const account = accounts.find(acc => acc.address === address);
+      if (account) setSelectedAccount(account);
+    },
   }
 
   // 直接渲染子组件，不阻塞应用启动

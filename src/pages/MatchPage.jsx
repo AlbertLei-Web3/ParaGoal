@@ -20,6 +20,7 @@ export function MatchPage() {
   // Load user-created matches from localStorage
   // 从本地存储加载用户创建的比赛
   React.useEffect(() => {
+    console.log('Address changed in MatchPage:', address);
     if (address && isConnected) {
       loadUserMatches()
     }
@@ -76,7 +77,7 @@ export function MatchPage() {
           </div>
           <AiCommentary />
           <MatchStats />
-          <BetPanel teamA={match.teamA} teamB={match.teamB} />
+          <BetPanel teamA={match.teamA} teamB={match.teamB} matchId={match.id} />
           
           {/* Show match source info */}
           {/* 显示比赛来源信息 */}

@@ -1,0 +1,1618 @@
+{
+  "source": {
+    "hash": "0x45a095cc4900422d2bbcc213fe26975555d2b5a18a14d1e3853b479c49044d21",
+    "language": "ink! 4.3.0",
+    "compiler": "rustc 1.90.0",
+    "build_info": {
+      "build_mode": "Release",
+      "cargo_contract_version": "3.2.0",
+      "rust_toolchain": "stable-x86_64-unknown-linux-gnu",
+      "wasm_opt_settings": {
+        "keep_debug_symbols": false,
+        "optimization_passes": "Z"
+      }
+    }
+  },
+  "contract": {
+    "name": "paragoal_betting",
+    "version": "0.1.0",
+    "authors": [
+      "ParaGoal Team <team@paragoal.local>"
+    ],
+    "description": "ParaGoalBetting Ink! contract for PAS betting prototype",
+    "repository": "https://example.com/paragoal/repo.git",
+    "homepage": "https://example.com/paragoal",
+    "license": "MIT"
+  },
+  "spec": {
+    "constructors": [
+      {
+        "args": [],
+        "default": false,
+        "docs": [],
+        "label": "new",
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink_primitives",
+            "ConstructorResult"
+          ],
+          "type": 5
+        },
+        "selector": "0x9bae9d5e"
+      }
+    ],
+    "docs": [],
+    "environment": {
+      "accountId": {
+        "displayName": [
+          "AccountId"
+        ],
+        "type": 1
+      },
+      "balance": {
+        "displayName": [
+          "Balance"
+        ],
+        "type": 0
+      },
+      "blockNumber": {
+        "displayName": [
+          "BlockNumber"
+        ],
+        "type": 21
+      },
+      "chainExtension": {
+        "displayName": [
+          "ChainExtension"
+        ],
+        "type": 22
+      },
+      "hash": {
+        "displayName": [
+          "Hash"
+        ],
+        "type": 19
+      },
+      "maxEventTopics": 4,
+      "timestamp": {
+        "displayName": [
+          "Timestamp"
+        ],
+        "type": 20
+      }
+    },
+    "events": [
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "admin",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "team_a",
+            "type": {
+              "displayName": [],
+              "type": 2
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "team_b",
+            "type": {
+              "displayName": [],
+              "type": 2
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "is_built_in",
+            "type": {
+              "displayName": [
+                "bool"
+              ],
+              "type": 4
+            }
+          }
+        ],
+        "docs": [],
+        "label": "MatchCreated"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "from",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "amount",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "total_pool",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "docs": [],
+        "label": "PoolInjected"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "user",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "team",
+            "type": {
+              "displayName": [
+                "Team"
+              ],
+              "type": 9
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "amount",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "docs": [],
+        "label": "Staked"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "docs": [],
+        "label": "MatchClosed"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "result",
+            "type": {
+              "displayName": [
+                "MatchResult"
+              ],
+              "type": 10
+            }
+          }
+        ],
+        "docs": [],
+        "label": "MatchSettled"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "user",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "amount",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "docs": [],
+        "label": "PayoutClaimed"
+      }
+    ],
+    "lang_error": {
+      "displayName": [
+        "ink",
+        "LangError"
+      ],
+      "type": 7
+    },
+    "messages": [
+      {
+        "args": [
+          {
+            "label": "team_a",
+            "type": {
+              "displayName": [],
+              "type": 2
+            }
+          },
+          {
+            "label": "team_b",
+            "type": {
+              "displayName": [],
+              "type": 2
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "create_match",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 8
+        },
+        "selector": "0xf218e52e"
+      },
+      {
+        "args": [
+          {
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "inject_pool",
+        "mutates": true,
+        "payable": true,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 5
+        },
+        "selector": "0xae4e8fcc"
+      },
+      {
+        "args": [
+          {
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "open_match",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 5
+        },
+        "selector": "0x044ab62f"
+      },
+      {
+        "args": [
+          {
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "close_match",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 5
+        },
+        "selector": "0x927c3482"
+      },
+      {
+        "args": [
+          {
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "label": "team",
+            "type": {
+              "displayName": [
+                "Team"
+              ],
+              "type": 9
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "stake",
+        "mutates": true,
+        "payable": true,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 5
+        },
+        "selector": "0x5adb38de"
+      },
+      {
+        "args": [
+          {
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "label": "result",
+            "type": {
+              "displayName": [
+                "MatchResult"
+              ],
+              "type": 10
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "settle_match",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 5
+        },
+        "selector": "0xb4344fed"
+      },
+      {
+        "args": [
+          {
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "claim_payout",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 5
+        },
+        "selector": "0x6b523ec0"
+      },
+      {
+        "args": [
+          {
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "label": "user",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "withdraw_unclaimed",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 5
+        },
+        "selector": "0x8cebd252"
+      },
+      {
+        "args": [
+          {
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "get_match",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 11
+        },
+        "selector": "0x38785c75"
+      },
+      {
+        "args": [
+          {
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "label": "user",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "get_user_stake",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 16
+        },
+        "selector": "0x6d33e1a9"
+      },
+      {
+        "args": [
+          {
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "label": "user",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 1
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "pending_payout",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 8
+        },
+        "selector": "0xb1ae3d8a"
+      },
+      {
+        "args": [
+          {
+            "label": "match_id",
+            "type": {
+              "displayName": [
+                "u128"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "label": "new_team_a",
+            "type": {
+              "displayName": [],
+              "type": 2
+            }
+          },
+          {
+            "label": "new_team_b",
+            "type": {
+              "displayName": [],
+              "type": 2
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "update_match_teams",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 5
+        },
+        "selector": "0xab5bebd6"
+      },
+      {
+        "args": [
+          {
+            "label": "to",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 1
+            }
+          },
+          {
+            "label": "amount",
+            "type": {
+              "displayName": [
+                "Balance"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "emergency_withdraw",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 5
+        },
+        "selector": "0xd7ee888f"
+      }
+    ]
+  },
+  "storage": {
+    "root": {
+      "layout": {
+        "struct": {
+          "fields": [
+            {
+              "layout": {
+                "leaf": {
+                  "key": "0x00000000",
+                  "ty": 0
+                }
+              },
+              "name": "next_match_id"
+            },
+            {
+              "layout": {
+                "root": {
+                  "layout": {
+                    "struct": {
+                      "fields": [
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0x4628d91c",
+                              "ty": 0
+                            }
+                          },
+                          "name": "id"
+                        },
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0x4628d91c",
+                              "ty": 1
+                            }
+                          },
+                          "name": "admin"
+                        },
+                        {
+                          "layout": {
+                            "array": {
+                              "layout": {
+                                "leaf": {
+                                  "key": "0x4628d91c",
+                                  "ty": 3
+                                }
+                              },
+                              "len": 32,
+                              "offset": "0x4628d91c"
+                            }
+                          },
+                          "name": "team_a"
+                        },
+                        {
+                          "layout": {
+                            "array": {
+                              "layout": {
+                                "leaf": {
+                                  "key": "0x4628d91c",
+                                  "ty": 3
+                                }
+                              },
+                              "len": 32,
+                              "offset": "0x4628d91c"
+                            }
+                          },
+                          "name": "team_b"
+                        },
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0x4628d91c",
+                              "ty": 4
+                            }
+                          },
+                          "name": "is_built_in"
+                        },
+                        {
+                          "layout": {
+                            "enum": {
+                              "dispatchKey": "0x4628d91c",
+                              "name": "Option",
+                              "variants": {
+                                "0": {
+                                  "fields": [],
+                                  "name": "None"
+                                },
+                                "1": {
+                                  "fields": [
+                                    {
+                                      "layout": {
+                                        "leaf": {
+                                          "key": "0x4628d91c",
+                                          "ty": 1
+                                        }
+                                      },
+                                      "name": "0"
+                                    }
+                                  ],
+                                  "name": "Some"
+                                }
+                              }
+                            }
+                          },
+                          "name": "pool_injected_by"
+                        },
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0x4628d91c",
+                              "ty": 0
+                            }
+                          },
+                          "name": "pool_amount"
+                        },
+                        {
+                          "layout": {
+                            "enum": {
+                              "dispatchKey": "0x4628d91c",
+                              "name": "MatchStatus",
+                              "variants": {
+                                "0": {
+                                  "fields": [],
+                                  "name": "Pending"
+                                },
+                                "1": {
+                                  "fields": [],
+                                  "name": "Open"
+                                },
+                                "2": {
+                                  "fields": [],
+                                  "name": "Closed"
+                                },
+                                "3": {
+                                  "fields": [],
+                                  "name": "Settled"
+                                }
+                              }
+                            }
+                          },
+                          "name": "status"
+                        },
+                        {
+                          "layout": {
+                            "enum": {
+                              "dispatchKey": "0x4628d91c",
+                              "name": "MatchResult",
+                              "variants": {
+                                "0": {
+                                  "fields": [],
+                                  "name": "None"
+                                },
+                                "1": {
+                                  "fields": [],
+                                  "name": "TeamA"
+                                },
+                                "2": {
+                                  "fields": [],
+                                  "name": "TeamB"
+                                },
+                                "3": {
+                                  "fields": [],
+                                  "name": "Draw"
+                                }
+                              }
+                            }
+                          },
+                          "name": "result"
+                        },
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0x4628d91c",
+                              "ty": 0
+                            }
+                          },
+                          "name": "total_stake_a"
+                        },
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0x4628d91c",
+                              "ty": 0
+                            }
+                          },
+                          "name": "total_stake_b"
+                        }
+                      ],
+                      "name": "Match"
+                    }
+                  },
+                  "root_key": "0x4628d91c"
+                }
+              },
+              "name": "matches"
+            },
+            {
+              "layout": {
+                "root": {
+                  "layout": {
+                    "struct": {
+                      "fields": [
+                        {
+                          "layout": {
+                            "enum": {
+                              "dispatchKey": "0x930bd6ac",
+                              "name": "Team",
+                              "variants": {
+                                "0": {
+                                  "fields": [],
+                                  "name": "TeamA"
+                                },
+                                "1": {
+                                  "fields": [],
+                                  "name": "TeamB"
+                                }
+                              }
+                            }
+                          },
+                          "name": "team"
+                        },
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0x930bd6ac",
+                              "ty": 0
+                            }
+                          },
+                          "name": "amount"
+                        },
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0x930bd6ac",
+                              "ty": 4
+                            }
+                          },
+                          "name": "claimed"
+                        }
+                      ],
+                      "name": "Stake"
+                    }
+                  },
+                  "root_key": "0x930bd6ac"
+                }
+              },
+              "name": "stakes"
+            },
+            {
+              "layout": {
+                "root": {
+                  "layout": {
+                    "leaf": {
+                      "key": "0x1090bccc",
+                      "ty": 1
+                    }
+                  },
+                  "root_key": "0x1090bccc"
+                }
+              },
+              "name": "fee_receiver"
+            },
+            {
+              "layout": {
+                "leaf": {
+                  "key": "0x00000000",
+                  "ty": 1
+                }
+              },
+              "name": "deployer"
+            }
+          ],
+          "name": "ParaGoalBetting"
+        }
+      },
+      "root_key": "0x00000000"
+    }
+  },
+  "types": [
+    {
+      "id": 0,
+      "type": {
+        "def": {
+          "primitive": "u128"
+        }
+      }
+    },
+    {
+      "id": 1,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "type": 2,
+                "typeName": "[u8; 32]"
+              }
+            ]
+          }
+        },
+        "path": [
+          "ink_primitives",
+          "types",
+          "AccountId"
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "type": {
+        "def": {
+          "array": {
+            "len": 32,
+            "type": 3
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": {
+        "def": {
+          "primitive": "u8"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": {
+        "def": {
+          "primitive": "bool"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 6
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 7
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 6
+          },
+          {
+            "name": "E",
+            "type": 7
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "type": {
+        "def": {
+          "tuple": []
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 1,
+                "name": "CouldNotReadInput"
+              }
+            ]
+          }
+        },
+        "path": [
+          "ink_primitives",
+          "LangError"
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 0
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 7
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 0
+          },
+          {
+            "name": "E",
+            "type": 7
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "TeamA"
+              },
+              {
+                "index": 1,
+                "name": "TeamB"
+              }
+            ]
+          }
+        },
+        "path": [
+          "paragoal_betting",
+          "paragoal_betting",
+          "Team"
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "None"
+              },
+              {
+                "index": 1,
+                "name": "TeamA"
+              },
+              {
+                "index": 2,
+                "name": "TeamB"
+              },
+              {
+                "index": 3,
+                "name": "Draw"
+              }
+            ]
+          }
+        },
+        "path": [
+          "paragoal_betting",
+          "paragoal_betting",
+          "MatchResult"
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 12
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 7
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 12
+          },
+          {
+            "name": "E",
+            "type": 7
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 12,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "None"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 13
+                  }
+                ],
+                "index": 1,
+                "name": "Some"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 13
+          }
+        ],
+        "path": [
+          "Option"
+        ]
+      }
+    },
+    {
+      "id": 13,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "name": "id",
+                "type": 0,
+                "typeName": "u128"
+              },
+              {
+                "name": "admin",
+                "type": 1,
+                "typeName": "AccountId"
+              },
+              {
+                "name": "team_a",
+                "type": 2,
+                "typeName": "[u8; 32]"
+              },
+              {
+                "name": "team_b",
+                "type": 2,
+                "typeName": "[u8; 32]"
+              },
+              {
+                "name": "is_built_in",
+                "type": 4,
+                "typeName": "bool"
+              },
+              {
+                "name": "pool_injected_by",
+                "type": 14,
+                "typeName": "Option<AccountId>"
+              },
+              {
+                "name": "pool_amount",
+                "type": 0,
+                "typeName": "Balance"
+              },
+              {
+                "name": "status",
+                "type": 15,
+                "typeName": "MatchStatus"
+              },
+              {
+                "name": "result",
+                "type": 10,
+                "typeName": "MatchResult"
+              },
+              {
+                "name": "total_stake_a",
+                "type": 0,
+                "typeName": "Balance"
+              },
+              {
+                "name": "total_stake_b",
+                "type": 0,
+                "typeName": "Balance"
+              }
+            ]
+          }
+        },
+        "path": [
+          "paragoal_betting",
+          "paragoal_betting",
+          "Match"
+        ]
+      }
+    },
+    {
+      "id": 14,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "None"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 1
+                  }
+                ],
+                "index": 1,
+                "name": "Some"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 1
+          }
+        ],
+        "path": [
+          "Option"
+        ]
+      }
+    },
+    {
+      "id": 15,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "Pending"
+              },
+              {
+                "index": 1,
+                "name": "Open"
+              },
+              {
+                "index": 2,
+                "name": "Closed"
+              },
+              {
+                "index": 3,
+                "name": "Settled"
+              }
+            ]
+          }
+        },
+        "path": [
+          "paragoal_betting",
+          "paragoal_betting",
+          "MatchStatus"
+        ]
+      }
+    },
+    {
+      "id": 16,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 17
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 7
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 17
+          },
+          {
+            "name": "E",
+            "type": 7
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 17,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "None"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 18
+                  }
+                ],
+                "index": 1,
+                "name": "Some"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 18
+          }
+        ],
+        "path": [
+          "Option"
+        ]
+      }
+    },
+    {
+      "id": 18,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "name": "team",
+                "type": 9,
+                "typeName": "Team"
+              },
+              {
+                "name": "amount",
+                "type": 0,
+                "typeName": "Balance"
+              },
+              {
+                "name": "claimed",
+                "type": 4,
+                "typeName": "bool"
+              }
+            ]
+          }
+        },
+        "path": [
+          "paragoal_betting",
+          "paragoal_betting",
+          "Stake"
+        ]
+      }
+    },
+    {
+      "id": 19,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "type": 2,
+                "typeName": "[u8; 32]"
+              }
+            ]
+          }
+        },
+        "path": [
+          "ink_primitives",
+          "types",
+          "Hash"
+        ]
+      }
+    },
+    {
+      "id": 20,
+      "type": {
+        "def": {
+          "primitive": "u64"
+        }
+      }
+    },
+    {
+      "id": 21,
+      "type": {
+        "def": {
+          "primitive": "u32"
+        }
+      }
+    },
+    {
+      "id": 22,
+      "type": {
+        "def": {
+          "variant": {}
+        },
+        "path": [
+          "ink_env",
+          "types",
+          "NoChainExtension"
+        ]
+      }
+    }
+  ],
+  "version": "4"
+}

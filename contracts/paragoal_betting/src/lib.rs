@@ -5,6 +5,12 @@
 // 注释说明: 这个合约严格遵循设计文档，包括比赛管理、admin权限、投注结算等。初学者注意: Ink! 使用 #[ink(...)] 宏定义合约元素，存储在 #[ink(storage)] 中。
 
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::arithmetic_side_effects,
+    clippy::needless_borrows_for_generic_args,
+    clippy::new_without_default
+)]
 
 #[ink::contract]
 mod paragoal_betting {
@@ -132,6 +138,14 @@ mod paragoal_betting {
         stakes: Mapping<(u128, AccountId), Stake>,        // 投注记录 / Stakes mapping (match_id, user)
         fee_receiver: Mapping<u128, AccountId>,           // 每个比赛的手续费接收者 / Fee receiver per match
         deployer: AccountId,
+    }
+
+    // 为了满足某些严格的lint规则，提供Default实现（调用new）
+    // Provide Default to satisfy strict lints; internally calls new()
+    impl Default for ParaGoalBetting {
+        fn default() -> Self {
+            Self::new()
+        }
     }
 
     impl ParaGoalBetting {

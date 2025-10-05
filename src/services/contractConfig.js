@@ -3,9 +3,15 @@
 // 基于用户提供的正确网络参数配置
 // English: Based on user-provided correct network parameters
 
+import metadata from './contractMetadata.json';
+
 // 合约地址（部署后填写）
 // English: Contract address (fill after deployment)
-export const CONTRACT_ADDRESS = import.meta.env.VITE_PUBLIC_CONTRACT_ADDRESS || ''
+export const CONTRACT_ADDRESS = '1519q8PrTHXyzdRByF9BfHrxFdNnHHvZ1bJMAeXondN1ZXai'
+
+// Ink! 合约元数据
+// English: Ink! contract metadata
+export const CONTRACT_METADATA = metadata;
 
 // 合约ABI（部署后填写）
 // English: Contract ABI (fill after deployment)
