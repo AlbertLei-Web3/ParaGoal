@@ -48,8 +48,7 @@ mod paragoal_betting {
     // 结构体定义: 比赛 / Struct: Match
     // 中文: 存储每场比赛的信息，包括ID、admin、队伍等。初学者: #[derive] 添加了序列化支持，便于链上存储。
     // English: Stores information for each match, including ID, admin, teams, etc. For beginners: #[derive] adds serialization support for on-chain storage.
-    #[derive(scale::Encode, scale::Decode, Debug, Clone)]
-    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    #[derive(scale::Encode, scale::Decode, Debug, Clone, ink::storage::traits::Storable, ink::storage::traits::Packed, scale_info::TypeInfo)]
     pub struct Match {
         pub id: u128,                // 比赛ID / Match ID
         pub admin: AccountId,        // 管理员地址（创建者） / Admin address (creator)
@@ -67,8 +66,7 @@ mod paragoal_betting {
     // 结构体定义: 用户投注记录 / Struct: Stake
     // 中文: 记录用户的投注细节。初学者: Option<Balance> 表示可选值，如果未设置则为None。
     // English: Records user's betting details. For beginners: Option<Balance> means optional value, None if not set.
-    #[derive(scale::Encode, scale::Decode, Debug, Clone)]
-    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    #[derive(scale::Encode, scale::Decode, Debug, Clone, ink::storage::traits::Storable, ink::storage::traits::Packed, scale_info::TypeInfo)]
     pub struct Stake {
         pub team: Team,         // 投注队伍 / Bet team
         pub amount: Balance,    // 投注金额 / Stake amount
@@ -174,7 +172,7 @@ mod paragoal_betting {
                     is_built_in: true,
                 });
             }
-            instance.deployer = Self::env().caller();
+            instance.deployer = ink::env::DefaultEnvironment::default_account_id();  // Or Self::env().caller() if available, but use default for Default trait
             instance
         }
 
