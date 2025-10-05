@@ -5,7 +5,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 
-use paragoal_betting::ParaGoalBetting;  // 导入合约 / Import contract
+use crate::ParaGoalBetting;  // Correct import for tests
 
 #[ink::test]
 fn test_create_match() {
@@ -14,7 +14,7 @@ fn test_create_match() {
     let team_b = [1u8; 32];
     let match_id = contract.create_match(team_a, team_b);
     let match_data = contract.get_match(match_id).unwrap();
-    assert_eq!(match_data.admin, ink::env::test::caller::<ink::env::DefaultEnvironment>());
+    assert_eq!(match_data.admin, ink::env::test::callee::<ink::env::DefaultEnvironment>());
     assert_eq!(match_data.status, MatchStatus::Pending);
     assert_eq!(match_data.is_built_in, false);
 }
@@ -28,7 +28,7 @@ fn test_inject_pool() {
     contract.inject_pool(match_id);
     let match_data = contract.get_match(match_id).unwrap();
     assert_eq!(match_data.pool_amount, initial_balance);
-    assert_eq!(match_data.pool_injected_by.unwrap(), ink::env::test::caller::<ink::env::DefaultEnvironment>());
+    assert_eq!(match_data.pool_injected_by.unwrap(), ink::env::test::callee::<ink::env::DefaultEnvironment>());
 }
 
 #[ink::test]
@@ -43,7 +43,7 @@ fn test_stake_and_settle_win() {
     contract.settle_match(match_id, MatchResult::TeamA);
     contract.claim_payout(match_id);
     // 验证claimed / Verify claimed
-    let stake = contract.get_user_stake(match_id, ink::env::test::caller::<ink::env::DefaultEnvironment>()).unwrap();
+    let stake = contract.get_user_stake(match_id, ink::env::test::callee::<ink::env::DefaultEnvironment>()).unwrap();
     assert!(stake.claimed);
 }
 
@@ -69,7 +69,10 @@ fn test_zero_stake() {
     contract.close_match(match_id);
     contract.settle_match(match_id, MatchResult::TeamA);
     // 无投注，claim应panic或处理 / No stake, claim should panic or handle
-    ink::env::test::expect_panic(|| contract.claim_payout(match_id));
+    let panic_happened = std::panic::catch_unwind(|| {
+        contract.claim_payout(match_id);
+    }).is_err();
+    assert!(panic_happened, "Should panic on no stake");
 }
 
 // 更多测试可添加 / More tests can be added

@@ -8,7 +8,6 @@
 
 #[ink::contract]
 mod paragoal_betting {
-    use ink::prelude::vec::Vec;
     use ink::storage::Mapping;
 
     // 枚举定义: 比赛状态 / Enum: Match Status
@@ -48,7 +47,7 @@ mod paragoal_betting {
     // 结构体定义: 比赛 / Struct: Match
     // 中文: 存储每场比赛的信息，包括ID、admin、队伍等。初学者: #[derive] 添加了序列化支持，便于链上存储。
     // English: Stores information for each match, including ID, admin, teams, etc. For beginners: #[derive] adds serialization support for on-chain storage.
-    #[derive(scale::Encode, scale::Decode, Debug, Clone, ink::storage::traits::Storable, ink::storage::traits::Packed, scale_info::TypeInfo)]
+    #[derive(scale::Encode, scale::Decode, Debug, Clone, ink::storage::traits::Storable, ink::storage::traits::StorageLayout, scale_info::TypeInfo, ink::storage::traits::Packed)]
     pub struct Match {
         pub id: u128,                // 比赛ID / Match ID
         pub admin: AccountId,        // 管理员地址（创建者） / Admin address (creator)
@@ -66,7 +65,7 @@ mod paragoal_betting {
     // 结构体定义: 用户投注记录 / Struct: Stake
     // 中文: 记录用户的投注细节。初学者: Option<Balance> 表示可选值，如果未设置则为None。
     // English: Records user's betting details. For beginners: Option<Balance> means optional value, None if not set.
-    #[derive(scale::Encode, scale::Decode, Debug, Clone, ink::storage::traits::Storable, ink::storage::traits::Packed, scale_info::TypeInfo)]
+    #[derive(scale::Encode, scale::Decode, Debug, Clone, ink::storage::traits::Storable, ink::storage::traits::StorageLayout, scale_info::TypeInfo, ink::storage::traits::Packed)]
     pub struct Stake {
         pub team: Team,         // 投注队伍 / Bet team
         pub amount: Balance,    // 投注金额 / Stake amount
@@ -172,7 +171,7 @@ mod paragoal_betting {
                     is_built_in: true,
                 });
             }
-            instance.deployer = ink::env::DefaultEnvironment::default_account_id();  // Or Self::env().caller() if available, but use default for Default trait
+            instance.deployer = Self::env().caller();  // Use caller for initialization, no Default needed
             instance
         }
 
@@ -353,7 +352,7 @@ mod paragoal_betting {
                 user_pool = (stake.amount.checked_mul(pool_share).expect("Overflow") / total_stake_team);
             }
             let user_share = stake.amount.checked_add(user_pool).expect("Overflow");
-            let fee = (user_share.checked_mul(5).expect("Overflow") / 100);
+            let fee = user_share.checked_mul(5).expect("Overflow") / 100;
             let payout = user_share.checked_sub(fee).expect("Underflow");
 
             // 转账给用户 / Transfer to user
@@ -414,16 +413,10 @@ mod paragoal_betting {
             if total_stake_team == 0 {
                 user_pool = 0;  // 或返回本金 / Or return principal only
             } else {
-                user_pool = (stake.amount.checked_mul(if match_data.result == MatchResult::Draw {
-                    (match_data.pool_amount * 50) / 100
-                } else if is_winner {
-                    (match_data.pool_amount * 70) / 100
-                } else {
-                    (match_data.pool_amount * 30) / 100
-                }).expect("Overflow") / total_stake_team);
+                user_pool = (stake.amount.checked_mul(if match_data.result == MatchResult::Draw { (match_data.pool_amount * 50) / 100 } else if is_winner { (match_data.pool_amount * 70) / 100 } else { (match_data.pool_amount * 30) / 100 }).expect("Overflow") / total_stake_team);
             }
             let user_share = stake.amount.checked_add(user_pool).expect("Overflow");
-            let fee = (user_share.checked_mul(5).expect("Overflow") / 100);
+            let fee = user_share.checked_mul(5).expect("Overflow") / 100;
             let payout = user_share.checked_sub(fee).expect("Underflow");
 
             // 转账到管理员（而非用户） / Transfer to admin (instead of user)

@@ -8,6 +8,9 @@ ink = { version = "4.3", default-features = false }
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
 scale-info = { version = "2", default-features = false, features = ["derive"] }
 
+[dev-dependencies]
+ink = { version = "4.3", default-features = false, features = ["ink-test"] }
+
 [lib]
 crate-type = ["cdylib"]
 path = "lib.rs"
