@@ -8,13 +8,15 @@
 
 #[ink::contract]
 mod paragoal_betting {
+    use ink::prelude::vec;
     use ink::storage::Mapping;
+    use ink::storage::traits::StorageLayout;
 
     // 枚举定义: 比赛状态 / Enum: Match Status
     // 中文: 定义比赛的生命周期状态，从Pending开始，到Settled结束。初学者: 枚举是Rust中定义固定选项的方式，这里用于状态机控制。
     // English: Defines the lifecycle states of a match, from Pending to Settled. For beginners: Enums in Rust define fixed options, used here for state machine control.
     #[derive(scale::Encode, scale::Decode, Debug, PartialEq, Eq, Copy, Clone)]
-    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     pub enum MatchStatus {
         Pending,  // 等待开启 / Pending for opening
         Open,     // 开放投注 / Open for betting
@@ -26,7 +28,7 @@ mod paragoal_betting {
     // 中文: 用户投注时选择队伍，0为TeamA，1为TeamB。初学者: u8 用于节省存储空间。
     // English: User selects team when betting, 0 for TeamA, 1 for TeamB. For beginners: u8 is used to save storage space.
     #[derive(scale::Encode, scale::Decode, Debug, PartialEq, Eq, Copy, Clone)]
-    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     pub enum Team {
         TeamA,  // 队伍A / Team A
         TeamB,  // 队伍B / Team B
@@ -36,7 +38,7 @@ mod paragoal_betting {
     // 中文: 结算时设置结果，None表示未结算。初学者: 这用于确定赢家和输家。
     // English: Set during settlement, None means not settled. For beginners: This determines winners and losers.
     #[derive(scale::Encode, scale::Decode, Debug, PartialEq, Eq, Copy, Clone)]
-    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     pub enum MatchResult {
         None,    // 未结算 / Not settled
         TeamA,   // TeamA获胜 / TeamA wins
@@ -47,7 +49,8 @@ mod paragoal_betting {
     // 结构体定义: 比赛 / Struct: Match
     // 中文: 存储每场比赛的信息，包括ID、admin、队伍等。初学者: #[derive] 添加了序列化支持，便于链上存储。
     // English: Stores information for each match, including ID, admin, teams, etc. For beginners: #[derive] adds serialization support for on-chain storage.
-    #[derive(scale::Encode, scale::Decode, Debug, Clone, ink::storage::traits::Storable, ink::storage::traits::StorageLayout, scale_info::TypeInfo, ink::storage::traits::Packed)]
+    #[derive(scale::Encode, scale::Decode, Debug, Clone)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     pub struct Match {
         pub id: u128,                // 比赛ID / Match ID
         pub admin: AccountId,        // 管理员地址（创建者） / Admin address (creator)
@@ -65,7 +68,8 @@ mod paragoal_betting {
     // 结构体定义: 用户投注记录 / Struct: Stake
     // 中文: 记录用户的投注细节。初学者: Option<Balance> 表示可选值，如果未设置则为None。
     // English: Records user's betting details. For beginners: Option<Balance> means optional value, None if not set.
-    #[derive(scale::Encode, scale::Decode, Debug, Clone, ink::storage::traits::Storable, ink::storage::traits::StorageLayout, scale_info::TypeInfo, ink::storage::traits::Packed)]
+    #[derive(scale::Encode, scale::Decode, Debug, Clone)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     pub struct Stake {
         pub team: Team,         // 投注队伍 / Bet team
         pub amount: Balance,    // 投注金额 / Stake amount
@@ -122,7 +126,6 @@ mod paragoal_betting {
     // 中文: 所有持久化数据存储在这里。初学者: Mapping 类似于Solidity的mapping，用于键值存储。
     // English: All persistent data is stored here. For beginners: Mapping is similar to Solidity's mapping for key-value storage.
     #[ink(storage)]
-    #[derive(Default)]
     pub struct ParaGoalBetting {
         next_match_id: u128,                              // 下一个比赛ID / Next match ID
         matches: Mapping<u128, Match>,                    // 比赛映射 / Matches mapping
@@ -137,7 +140,14 @@ mod paragoal_betting {
         // English: Initializes the contract, sets up built-in matches (4 fixed). For beginners: #[ink(constructor)] marks this as the deployment function.
         #[ink(constructor)]
         pub fn new() -> Self {
-            let mut instance = Self::default();
+            let caller = Self::env().caller();
+            let mut instance = Self {
+                next_match_id: 0,
+                matches: Mapping::default(),
+                stakes: Mapping::default(),
+                fee_receiver: Mapping::default(),
+                deployer: caller,
+            };
             // 初始化4场内置比赛 / Initialize 4 built-in matches
             // 中文: 根据设计，内置4场固定比赛，admin设置为合约部署者。初学者: 这里循环创建比赛。
             // English: As per design, 4 fixed built-in matches, admin set to deployer. For beginners: Loop to create matches.
@@ -152,7 +162,7 @@ mod paragoal_betting {
                 instance.next_match_id += 1;
                 instance.matches.insert(match_id, &Match {
                     id: match_id,
-                    admin: Self::env().caller(),  // 部署者为admin / Deployer as admin
+                    admin: caller,  // 部署者为admin / Deployer as admin
                     team_a,
                     team_b,
                     is_built_in: true,
@@ -165,13 +175,12 @@ mod paragoal_betting {
                 });
                 instance.env().emit_event(MatchCreated {
                     match_id,
-                    admin: Self::env().caller(),
+                    admin: caller,
                     team_a,
                     team_b,
                     is_built_in: true,
                 });
             }
-            instance.deployer = Self::env().caller();  // Use caller for initialization, no Default needed
             instance
         }
 
@@ -337,7 +346,6 @@ mod paragoal_betting {
             };
             assert!(total_stake_team > 0, "No stakes for team");
 
-            let user_ratio = stake.amount / total_stake_team;  // 用户比例 / User ratio
             let pool_share = if match_data.result == MatchResult::Draw {
                 (match_data.pool_amount * 50) / 100  // 平分 / 50% split
             } else if is_winner {
@@ -345,27 +353,39 @@ mod paragoal_betting {
             } else {
                 (match_data.pool_amount * 30) / 100
             };
-            let user_pool: Balance;
-            if total_stake_team == 0 {
-                user_pool = 0;  // 或返回本金 / Or return principal only
+            let user_pool: Balance = if total_stake_team == 0 {
+                0 // 无同向总额，则仅返还本金 / No same-side total, return principal only
             } else {
-                user_pool = (stake.amount.checked_mul(pool_share).expect("Overflow") / total_stake_team);
-            }
+                stake
+                    .amount
+                    .checked_mul(pool_share)
+                    .expect("Overflow")
+                    / total_stake_team
+            };
             let user_share = stake.amount.checked_add(user_pool).expect("Overflow");
-            let fee = user_share.checked_mul(5).expect("Overflow") / 100;
-            let payout = user_share.checked_sub(fee).expect("Underflow");
+
+            // 手续费接收者判定在转账前 / Decide fee before transfers
+            let fee_receiver = self.fee_receiver.get(&match_id);
+            let (fee, payout) = if fee_receiver.is_some() {
+                let f = user_share.checked_mul(5).expect("Overflow") / 100;
+                let p = user_share.checked_sub(f).expect("Underflow");
+                (f, p)
+            } else {
+                // 无首次注入者，则不收取手续费 / No first injector -> no fee
+                (0, user_share)
+            };
 
             // 转账给用户 / Transfer to user
             self.env().transfer(caller, payout).expect("Transfer failed");
 
-            // 手续费给接收者 / Fee to receiver
-            let fee_receiver = self.fee_receiver.get(&match_id);
+            // 如有手续费接收者则发送手续费 / Send fee if receiver exists
             if let Some(receiver) = fee_receiver {
-                self.env().transfer(receiver, fee).expect("Fee transfer failed");
-            } else {
-                // No injection, no fee receiver, perhaps keep fee in contract or zero
-                // For now, transfer to caller or skip; design assumes injection, so assert
-                assert!(false, "No fee receiver set");
+                if fee > 0 {
+                    self
+                        .env()
+                        .transfer(receiver, fee)
+                        .expect("Fee transfer failed");
+                }
             }
 
             stake.claimed = true;
@@ -409,22 +429,47 @@ mod paragoal_betting {
             };
             assert!(total_stake_team > 0, "No stakes for team");
 
-            let user_pool: Balance;
-            if total_stake_team == 0 {
-                user_pool = 0;  // 或返回本金 / Or return principal only
+            let user_pool: Balance = if total_stake_team == 0 {
+                0
             } else {
-                user_pool = (stake.amount.checked_mul(if match_data.result == MatchResult::Draw { (match_data.pool_amount * 50) / 100 } else if is_winner { (match_data.pool_amount * 70) / 100 } else { (match_data.pool_amount * 30) / 100 }).expect("Overflow") / total_stake_team);
-            }
+                let share = if match_data.result == MatchResult::Draw {
+                    (match_data.pool_amount * 50) / 100
+                } else if is_winner {
+                    (match_data.pool_amount * 70) / 100
+                } else {
+                    (match_data.pool_amount * 30) / 100
+                };
+                stake
+                    .amount
+                    .checked_mul(share)
+                    .expect("Overflow")
+                    / total_stake_team
+            };
             let user_share = stake.amount.checked_add(user_pool).expect("Overflow");
-            let fee = user_share.checked_mul(5).expect("Overflow") / 100;
-            let payout = user_share.checked_sub(fee).expect("Underflow");
+
+            let fee_receiver = self.fee_receiver.get(&match_id);
+            let (fee, payout) = if fee_receiver.is_some() {
+                let f = user_share.checked_mul(5).expect("Overflow") / 100;
+                let p = user_share.checked_sub(f).expect("Underflow");
+                (f, p)
+            } else {
+                (0, user_share)
+            };
 
             // 转账到管理员（而非用户） / Transfer to admin (instead of user)
-            self.env().transfer(match_data.admin, payout).expect("Transfer failed");
+            self
+                .env()
+                .transfer(match_data.admin, payout)
+                .expect("Transfer failed");
 
-            // 手续费仍给接收者 / Fee still to receiver
-            if let Some(receiver) = self.fee_receiver.get(&match_id) {
-                self.env().transfer(receiver, fee).expect("Fee transfer failed");
+            // 手续费仍给接收者（若存在） / Fee still to receiver if exists
+            if let Some(receiver) = fee_receiver {
+                if fee > 0 {
+                    self
+                        .env()
+                        .transfer(receiver, fee)
+                        .expect("Fee transfer failed");
+                }
             }
 
             stake.claimed = true;  // 标记为已处理 / Mark as handled
@@ -448,6 +493,70 @@ mod paragoal_betting {
         }
 
         // 其他函数可根据需要添加 / Additional functions can be added as needed
+
+        // 查看函数: 预览可领取金额 / View Function: Pending Payout Preview
+        // 中文: 返回用户在指定比赛的“可领取最终金额”（扣费后），不改状态、不转账。\n
+        //  - 若比赛未结算/用户无下注/已领取，返回0。\n
+        //  - 计算与 claim_payout 完全一致：本金 + 按方向分配（赢70%/输30%/平局50%），再扣5%手续费（若有首次注入者）。
+        // English: Returns user's final payable amount for a given match (after fees), read-only.\n
+        //  - Returns 0 if not settled / no stake / already claimed.\n
+        //  - Same math as claim_payout: principal + side share (win 70% / lose 30% / draw 50%), minus 5% fee if a fee receiver exists.
+        #[ink(message)]
+        pub fn pending_payout(&self, match_id: u128, user: AccountId) -> Balance {
+            // 读取用户投注 / Load user stake (or 0 if missing)
+            let stake = match self.stakes.get(&(match_id, user)) {
+                Some(s) => s,
+                None => return 0,
+            };
+            // 已领取直接返回0 / Already claimed -> zero
+            if stake.claimed { return 0; }
+            // 读取比赛并校验状态 / Load match and ensure it's settled
+            let m = match self.matches.get(&match_id) {
+                Some(mm) => mm,
+                None => return 0,
+            };
+            if m.status != MatchStatus::Settled { return 0; }
+
+            // 计算分配方向 / Determine allocation side
+            let is_winner = if m.result == MatchResult::TeamA {
+                stake.team == Team::TeamA
+            } else if m.result == MatchResult::Draw {
+                true // 平局双方均分 / draw -> both share equally
+            } else {
+                stake.team == Team::TeamB
+            };
+
+            // 方向总额 / Total stake for user's side
+            let total_stake_team = if stake.team == Team::TeamA { m.total_stake_a } else { m.total_stake_b };
+
+            // 侧向奖池份额 / Side pool share (70/30/50)
+            let pool_share = if m.result == MatchResult::Draw {
+                (m.pool_amount * 50) / 100
+            } else if is_winner {
+                (m.pool_amount * 70) / 100
+            } else {
+                (m.pool_amount * 30) / 100
+            };
+
+            // 用户按比例分配的奖池 / Proportional pool share for user
+            let user_pool = if total_stake_team == 0 { 0 } else {
+                stake
+                    .amount
+                    .checked_mul(pool_share)
+                    .unwrap_or(0)
+                    / total_stake_team
+            };
+
+            // 总到手（未扣费）= 本金 + 奖池分成 / Gross before fee = principal + share
+            let user_share = stake.amount.checked_add(user_pool).unwrap_or(stake.amount);
+
+            // 是否有手续费接收者（首次注入者） / Whether fee receiver exists
+            let fee_receiver_exists = self.fee_receiver.get(&match_id).is_some();
+            // 手续费5%（若有接收者） / 5% fee if receiver exists
+            let fee = if fee_receiver_exists { user_share / 20 } else { 0 };
+            // 最终可领取金额 / Final payout amount
+            user_share.saturating_sub(fee)
+        }
 
         // Add missing function: update_match_teams (only admin, in Pending)
         // 中文: 仅admin可调用，更新队伍信息，在Pending状态。初学者: 这允许修改队伍标识。
@@ -477,6 +586,36 @@ mod paragoal_betting {
             let balance = self.env().balance();
             assert!(amount <= balance, "Insufficient balance");
             self.env().transfer(to, amount).expect("Transfer failed");
+        }
+    }
+
+    // =============================
+    // Unit Tests (#[ink::test])
+    // =============================
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        // 中文: 构造函数应初始化内置比赛，状态为Pending，且标记为内置。
+        // English: Constructor should initialize built-in matches with Pending status and built-in flag.
+        #[ink::test]
+        fn constructor_initializes_built_in_matches() {
+            let c = ParaGoalBetting::new();
+            let m0 = c.get_match(0).expect("built-in match 0 should exist");
+            assert_eq!(m0.status, MatchStatus::Pending);
+            assert!(m0.is_built_in);
+        }
+
+        // 中文: Admin创建自定义比赛后应能打开与关闭该比赛。
+        // English: Admin-created match can be opened and then closed.
+        #[ink::test]
+        fn admin_creates_opens_and_closes() {
+            let mut c = ParaGoalBetting::new();
+            let id = c.create_match([1u8;32], [2u8;32]);
+            c.open_match(id);
+            assert_eq!(c.get_match(id).unwrap().status, MatchStatus::Open);
+            c.close_match(id);
+            assert_eq!(c.get_match(id).unwrap().status, MatchStatus::Closed);
         }
     }
 }
