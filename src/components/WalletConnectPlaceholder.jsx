@@ -55,15 +55,15 @@ export function WalletConnectPlaceholder() {
     )
   }
 
-  // 如果未连接，显示连接按钮
-  // English: If not connected, show connect button
+  // 如果未连接，显示连接按钮（通用文案）
+  // English: If not connected, show a generic "Connect Wallet" button
   return (
     <button
       onClick={() => connect()}
       className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-full text-white"
     >
       <FaWallet className="mr-2" />
-      Connect Talisman
+      Connect Wallet
     </button>
   )
 }
