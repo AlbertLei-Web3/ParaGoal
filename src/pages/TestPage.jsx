@@ -1,5 +1,6 @@
 // /test page for hackathon prototype
-// English: Minimal test page for judges to verify the core on-chain action (UI placeholders for now).
+// Chinese: 简易自检页，展示当前链信息与 pallet-contracts 支持，并提供基本的合约写/读测试。
+// English: Minimal diagnostics page showing chain info and pallet-contracts support, plus basic write/read tests.
 import React from 'react'
 import { GlowCard } from '../components/GlowCard'
 import { getApi } from '../services/web3Client'
@@ -7,24 +8,31 @@ import { CONTRACT_ADDRESS, CONTRACT_ABI, WRITE_FUNC, READ_FUNC, EXPLORER_BASE_UR
 import { ContractPromise } from '@polkadot/api-contract';
 import { web3Accounts, web3Enable, web3FromAddress } from '@polkadot/extension-dapp';
 import { CONTRACT_METADATA } from '../services/contractConfig';
+import { makeGasLimit } from '../services/contractsCompat';
 
 export function TestPage() {
   // Placeholder states; will be wired to real chain later
   const [connected, setConnected] = React.useState(false)
-  const [network, setNetwork] = React.useState('Unknown')
+  const [network, setNetwork] = React.useState('Unknown') // Chinese: 链名 / English: chain name
+  const [genesis, setGenesis] = React.useState('') // Chinese: Genesis Hash / English: genesis hash
+  const [hasContracts, setHasContracts] = React.useState(false) // Chinese: 是否支持 pallet-contracts / English: support of pallet-contracts
   const [contract, setContract] = React.useState(CONTRACT_ADDRESS || '0x...')
   const [txHash, setTxHash] = React.useState('')
   const [readValue, setReadValue] = React.useState('')
   const [account, setAccount] = React.useState(null);
 
-  // 检测网络连接状态（简化为Polkadot API）
-  // English: Detect network connection status (simplified for Polkadot API)
+  // 检测网络连接状态（读取链名/Genesis，并检测 pallet-contracts）
+  // English: Detect chain name/genesis and check pallet-contracts availability
   React.useEffect(() => {
     const detectNetwork = async () => {
       try {
         const api = await getApi()
+        const chainName = (await api.rpc.system.chain()).toString()
         const chainId = api.genesisHash.toHex()
-        setNetwork(`Paseo (${chainId.slice(0, 8)}...)`)
+        const supportsContracts = !!(api.tx && api.tx.contracts && api.query && api.query.contracts)
+        setNetwork(chainName)
+        setGenesis(chainId)
+        setHasContracts(supportsContracts)
       } catch (error) {
         console.error('网络检测错误 / Network detection error:', error)
         setNetwork('连接失败 / Connection failed')
@@ -45,7 +53,19 @@ export function TestPage() {
     }
   };
 
-  // Real contract interaction
+  // 将 PAS 金额（字符串）转换为 Balance（10 位小数）
+  // English: Convert PAS amount string to Balance with 10 decimals
+  function toBalance(api, amountStr) {
+    const decimals = 10n;
+    const base = 10n ** decimals;
+    const [intPart, fracPart = ''] = String(amountStr || '0').split('.')
+    const intValue = BigInt(intPart || '0')
+    const fracDigits = BigInt((fracPart || '').slice(0, Number(decimals)).padEnd(Number(decimals), '0'))
+    const total = intValue * base + fracDigits
+    return api.registry.createType('Balance', total.toString())
+  }
+
+  // Real contract interaction (inject_pool + get_match)
   async function handleWriteAction() {
     if (!account) {
       alert('Please connect wallet first');
@@ -56,24 +76,21 @@ export function TestPage() {
       const api = await getApi();
       const contract = new ContractPromise(api, CONTRACT_METADATA, CONTRACT_ADDRESS);
 
-      const matchId = 1; // Example match ID
-      const gasLimit = api.registry.createType('WeightV2', {
-        refTime: 5000000000,
-        proofSize: 131072,
-      });
-      const value = api.registry.createType('Balance', '1000000000000'); // 1 unit, adjust as needed (PAS has 10 decimals)
+      const matchId = 1; // Chinese: 示例比赛ID，可在 UI 中改为动态 / English: example match id
+      const gasLimit = makeGasLimit(api, { refTime: 5_000_000_000, proofSize: 131_072, legacyWeight: 7_000_000_000 });
+      const value = toBalance(api, '1'); // Chinese: 1 PAS（10 位小数）/ English: 1 PAS
 
       const injector = await web3FromAddress(account.address);
 
       // Call inject_pool (payable)
-      const { gasRequired, result } = await contract.query.injectPool(
+      const { gasRequired, result } = await contract.query.inject_pool(
         account.address,
         { value, gasLimit },
         matchId
       );
 
       if (result.isOk) {
-        await contract.tx.injectPool({ gasLimit: gasRequired, value }, matchId).signAndSend(account.address, { signer: injector.signer }, (status) => {
+        await contract.tx.inject_pool({ gasLimit: gasRequired, value }, matchId).signAndSend(account.address, { signer: injector.signer }, (status) => {
           if (status.isInBlock) {
             setTxHash(status.asInBlock.toHex());
             alert('Transaction successful!');
@@ -84,7 +101,7 @@ export function TestPage() {
       }
 
       // Read example: get_match
-      const readResult = await contract.query.getMatch(account.address, { gasLimit }, matchId);
+      const readResult = await contract.query.get_match(account.address, { gasLimit }, matchId);
       setReadValue(JSON.stringify(readResult.output.toHuman()));
 
     } catch (error) {
@@ -109,7 +126,15 @@ export function TestPage() {
           </div>
           <div className="space-y-1">
             <div className="text-slate-400 text-sm">Network</div>
-            <div className="text-slate-200 font-medium">{network} (expect Paseo)</div>
+            <div className="text-slate-200 font-medium">{network}</div>
+          </div>
+          <div className="space-y-1">
+            <div className="text-slate-400 text-sm">Genesis</div>
+            <div className="text-slate-200 font-mono break-all">{genesis || 'N/A'}</div>
+          </div>
+          <div className="space-y-1">
+            <div className="text-slate-400 text-sm">pallet-contracts</div>
+            <div className="text-slate-200 font-medium">{hasContracts ? 'Available' : 'Unavailable'}</div>
           </div>
           <div className="space-y-1 md:col-span-2">
             <div className="text-slate-400 text-sm">Contract Address</div>

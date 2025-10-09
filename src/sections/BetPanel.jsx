@@ -8,6 +8,7 @@ import { CONTRACT_ADDRESS, CONTRACT_METADATA } from '../services/contractConfig'
 import { ContractPromise } from '@polkadot/api-contract';
 import { web3FromAddress } from '@polkadot/extension-dapp';
 import { useWallet } from '../contexts/WalletContext';
+import { makeGasLimit } from '../services/contractsCompat';
 
 export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
   const { address, isConnected } = useWallet();
@@ -120,7 +121,7 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
       // Dry run
       const { gasRequired, result: dryResult } = await contract.query.inject_pool(
         address,
-        { value, gasLimit: api.registry.createType('WeightV2', { refTime: 2_500_000_000, proofSize: 250_000 }) },
+        { value, gasLimit: makeGasLimit(api, { refTime: 2_500_000_000, proofSize: 250_000, legacyWeight: 5_000_000_000 }) },
         id
       );
       if (dryResult.isErr) throw new Error('Query failed');
@@ -157,7 +158,7 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
         alert('该比赛尚未同步到链上，请先点击 "Sync to Chain"。\nMatch not on-chain yet. Please "Sync to Chain" first.');
         return;
       }
-      const gasLimit = api.registry.createType('WeightV2', { refTime: 2_500_000_000, proofSize: 250_000 });
+      const gasLimit = makeGasLimit(api, { refTime: 2_500_000_000, proofSize: 250_000, legacyWeight: 5_000_000_000 });
       const { gasRequired, result: dryResult } = await contract.query.stake(address, { value, gasLimit }, id, teamIndex);
       if (dryResult.isErr) throw new Error('Query failed');
       await contract.tx.stake({ gasLimit: gasRequired, value }, id, teamIndex)
@@ -181,7 +182,7 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
       const contract = new ContractPromise(api, CONTRACT_METADATA, CONTRACT_ADDRESS);
       const injector = await web3FromAddress(address);
       const id = chainMatchId; if (id == null) { alert('Sync to chain first'); return; }
-      const gasLimit = api.registry.createType('WeightV2', { refTime: 2_000_000_000, proofSize: 200_000 });
+      const gasLimit = makeGasLimit(api, { refTime: 2_000_000_000, proofSize: 200_000, legacyWeight: 4_000_000_000 });
       const { gasRequired, result } = await contract.query.open_match(address, { gasLimit }, id);
       if (result.isErr) throw new Error('Query failed');
       await contract.tx.open_match({ gasLimit: gasRequired }, id).signAndSend(address, { signer: injector.signer }, (res) => {
@@ -198,7 +199,7 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
       const contract = new ContractPromise(api, CONTRACT_METADATA, CONTRACT_ADDRESS);
       const injector = await web3FromAddress(address);
       const id = chainMatchId; if (id == null) { alert('Sync to chain first'); return; }
-      const gasLimit = api.registry.createType('WeightV2', { refTime: 2_000_000_000, proofSize: 200_000 });
+      const gasLimit = makeGasLimit(api, { refTime: 2_000_000_000, proofSize: 200_000, legacyWeight: 4_000_000_000 });
       const { gasRequired, result } = await contract.query.close_match(address, { gasLimit }, id);
       if (result.isErr) throw new Error('Query failed');
       await contract.tx.close_match({ gasLimit: gasRequired }, id).signAndSend(address, { signer: injector.signer }, (res) => {
@@ -215,7 +216,7 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
       const contract = new ContractPromise(api, CONTRACT_METADATA, CONTRACT_ADDRESS);
       const injector = await web3FromAddress(address);
       const id = chainMatchId; if (id == null) { alert('Sync to chain first'); return; }
-      const gasLimit = api.registry.createType('WeightV2', { refTime: 3_000_000_000, proofSize: 300_000 });
+      const gasLimit = makeGasLimit(api, { refTime: 3_000_000_000, proofSize: 300_000, legacyWeight: 6_000_000_000 });
       const { gasRequired, result } = await contract.query.settle_match(address, { gasLimit }, id, resultIndex);
       if (result.isErr) throw new Error('Query failed');
       await contract.tx.settle_match({ gasLimit: gasRequired }, id, resultIndex).signAndSend(address, { signer: injector.signer }, (res) => {
@@ -232,7 +233,7 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
       const contract = new ContractPromise(api, CONTRACT_METADATA, CONTRACT_ADDRESS);
       const injector = await web3FromAddress(address);
       const id = chainMatchId; if (id == null) { alert('Sync to chain first'); return; }
-      const gasLimit = api.registry.createType('WeightV2', { refTime: 3_000_000_000, proofSize: 300_000 });
+      const gasLimit = makeGasLimit(api, { refTime: 3_000_000_000, proofSize: 300_000, legacyWeight: 6_000_000_000 });
       const { gasRequired, result } = await contract.query.claim_payout(address, { gasLimit }, id);
       if (result.isErr) throw new Error('Query failed');
       await contract.tx.claim_payout({ gasLimit: gasRequired }, id).signAndSend(address, { signer: injector.signer }, (res) => {
@@ -250,7 +251,7 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
       const api = await getApi();
       const contract = new ContractPromise(api, CONTRACT_METADATA, CONTRACT_ADDRESS);
       const injector = await web3FromAddress(address);
-      const gasLimit = api.registry.createType('WeightV2', { refTime: 3_000_000_000, proofSize: 300_000 });
+      const gasLimit = makeGasLimit(api, { refTime: 3_000_000_000, proofSize: 300_000, legacyWeight: 6_000_000_000 });
       const a = stringToBytes32(teamA);
       const b = stringToBytes32(teamB);
 
