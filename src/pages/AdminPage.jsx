@@ -13,6 +13,11 @@ import { GlowCard } from '../components/GlowCard'
 import { BUILT_IN_MATCHES } from '../shared/builtinMatches'
 import { useWallet } from '../contexts/WalletContext'
 import { saveTeamsToIPFS, loadTeamsFromIPFS, saveMatchesToIPFS, loadMatchesFromIPFS, generateUserCID } from '../services/ipfsStorage'
+import { ContractPromise } from '@polkadot/api-contract'
+import { getApi } from '../services/web3Client'
+import { CONTRACT_ADDRESS, CONTRACT_METADATA } from '../services/contractConfig'
+import { web3FromAddress } from '@polkadot/extension-dapp'
+import { makeGasLimit, pickMessage } from '../services/contractsCompat'
 
 export function AdminPage() {
   const { address, isConnected, isCorrectNetwork } = useWallet()
@@ -169,8 +174,8 @@ export function AdminPage() {
     }
   }
 
-  // Create a match and save to localStorage
-  // 创建比赛并保存到本地存储
+  // Create a match on-chain and also mirror it locally (id mapping不可用时，前端使用链上 id 展示)
+  // Chinese: 将比赛写入链上，并在本地镜像展示（不再使用 local- 前缀）。
   const handleCreateMatch = async (e) => {
     e.preventDefault()
     if (!teamA || !teamB || teamA === teamB) {
@@ -184,28 +189,56 @@ export function AdminPage() {
     }
     
     try {
-      const newMatch = {
-        id: `local-${Date.now()}`,
-        teamA,
-        teamB,
-        createdAt: Date.now()
+      // 1) 上链创建
+      const api = await getApi()
+      const contract = new ContractPromise(api, CONTRACT_METADATA, CONTRACT_ADDRESS)
+      const injector = await web3FromAddress(address)
+      const gasLimit = makeGasLimit(api, { refTime: 3_000_000_000, proofSize: 300_000, legacyWeight: 6_000_000_000 })
+      const qCreate = pickMessage(contract.query, 'create_match', 'createMatch')
+      const tCreate = pickMessage(contract.tx, 'create_match', 'createMatch')
+      if (!qCreate || !tCreate) throw new Error('create_match message not found in ABI')
+
+      // bytes32 编码
+      const enc = (name) => {
+        const encoder = new TextEncoder();
+        const bytes = encoder.encode(name)
+        const arr = new Uint8Array(32); arr.fill(0); arr.set(bytes.slice(0, 32));
+        return arr
       }
-      
-      const updatedMatches = [newMatch, ...createdMatches]
-      setCreatedMatches(updatedMatches)
-      
-      // Save to localStorage
-      // 保存到本地存储
-      const result = await saveMatchesToIPFS(updatedMatches)
-      if (result.success) {
-        toast.success('Match created successfully!')
-        // Reset selects
-        // 重置选择
-        setTeamA('')
-        setTeamB('')
-      } else {
-        throw new Error(result.error)
-      }
+      const a = enc(teamA)
+      const b = enc(teamB)
+
+      const { gasRequired, result, output } = await qCreate(address, { gasLimit }, a, b)
+      if (result.isErr) throw new Error('Query failed')
+
+      await tCreate({ gasLimit: gasRequired }, a, b).signAndSend(address, { signer: injector.signer }, (res) => {
+        if (res.status?.isInBlock) {
+          // 2) 前端展示：尝试从 dry-run 输出读取新 matchId
+          let newId = undefined
+          try {
+            const j = output?.toJSON?.();
+            newId = j?.ok ?? j?.Ok ?? null;
+          } catch {}
+          if (newId == null) {
+            const human = output?.toHuman?.();
+            newId = human?.Ok ?? human?.ok ?? null
+          }
+
+          // 3) 同步到本地展示列表（链上 id）
+          const created = {
+            id: newId ?? `local-${Date.now()}`,
+            teamA,
+            teamB,
+            createdAt: Date.now()
+          }
+          const updatedMatches = [created, ...createdMatches]
+          setCreatedMatches(updatedMatches)
+          saveMatchesToIPFS(updatedMatches)
+          toast.success('Match created on-chain successfully!')
+          setTeamA('')
+          setTeamB('')
+        }
+      })
     } catch (error) {
       toast.error(`Failed to create match: ${error.message}`)
       console.error('Create match error:', error)

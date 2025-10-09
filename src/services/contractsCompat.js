@@ -46,4 +46,13 @@ export function makeGasLimit(api, opts = {}) {
   return api.registry.createType('Weight', weight)
 }
 
+/**
+ * 在合约对象上选择消息名（snake_case 或 camelCase）
+ * English: Pick message by snake_case or camelCase name from contract.query/tx
+ */
+export function pickMessage(container, snakeName, camelName) {
+  if (!container) return null
+  return container[snakeName] || container[camelName] || null
+}
+
 

@@ -8,7 +8,7 @@ import { CONTRACT_ADDRESS, CONTRACT_METADATA } from '../services/contractConfig'
 import { ContractPromise } from '@polkadot/api-contract';
 import { web3FromAddress } from '@polkadot/extension-dapp';
 import { useWallet } from '../contexts/WalletContext';
-import { makeGasLimit } from '../services/contractsCompat';
+import { makeGasLimit, pickMessage } from '../services/contractsCompat';
 
 export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
   const { address, isConnected } = useWallet();
@@ -118,8 +118,11 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
         return;
       }
 
-      // Dry run
-      const { gasRequired, result: dryResult } = await contract.query.inject_pool(
+      // Dry run（兼容 snake_case / camelCase）
+      const qInjectPool = pickMessage(contract.query, 'inject_pool', 'injectPool');
+      const tInjectPool = pickMessage(contract.tx, 'inject_pool', 'injectPool');
+      if (!qInjectPool || !tInjectPool) throw new Error('inject_pool message not found in ABI');
+      const { gasRequired, result: dryResult } = await qInjectPool(
         address,
         { value, gasLimit: makeGasLimit(api, { refTime: 2_500_000_000, proofSize: 250_000, legacyWeight: 5_000_000_000 }) },
         id
@@ -127,10 +130,7 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
       if (dryResult.isErr) throw new Error('Query failed');
 
       // Send tx
-      await contract.tx.inject_pool(
-        { gasLimit: gasRequired, value },
-        id
-      ).signAndSend(address, { signer: injector.signer }, (res) => {
+      await tInjectPool({ gasLimit: gasRequired, value }, id).signAndSend(address, { signer: injector.signer }, (res) => {
         if (res.status?.isInBlock) {
           alert('Reward pool added successfully!');
           refreshMatchInfo(id);
@@ -159,9 +159,12 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
         return;
       }
       const gasLimit = makeGasLimit(api, { refTime: 2_500_000_000, proofSize: 250_000, legacyWeight: 5_000_000_000 });
-      const { gasRequired, result: dryResult } = await contract.query.stake(address, { value, gasLimit }, id, teamIndex);
+      const qStake = pickMessage(contract.query, 'stake', 'stake');
+      const tStake = pickMessage(contract.tx, 'stake', 'stake');
+      if (!qStake || !tStake) throw new Error('stake message not found in ABI');
+      const { gasRequired, result: dryResult } = await qStake(address, { value, gasLimit }, id, teamIndex);
       if (dryResult.isErr) throw new Error('Query failed');
-      await contract.tx.stake({ gasLimit: gasRequired, value }, id, teamIndex)
+      await tStake({ gasLimit: gasRequired, value }, id, teamIndex)
         .signAndSend(address, { signer: injector.signer }, (res) => {
           if (res.status?.isInBlock) {
             alert('Stake placed successfully!');
@@ -183,9 +186,12 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
       const injector = await web3FromAddress(address);
       const id = chainMatchId; if (id == null) { alert('Sync to chain first'); return; }
       const gasLimit = makeGasLimit(api, { refTime: 2_000_000_000, proofSize: 200_000, legacyWeight: 4_000_000_000 });
-      const { gasRequired, result } = await contract.query.open_match(address, { gasLimit }, id);
+      const qOpen = pickMessage(contract.query, 'open_match', 'openMatch');
+      const tOpen = pickMessage(contract.tx, 'open_match', 'openMatch');
+      if (!qOpen || !tOpen) throw new Error('open_match message not found in ABI');
+      const { gasRequired, result } = await qOpen(address, { gasLimit }, id);
       if (result.isErr) throw new Error('Query failed');
-      await contract.tx.open_match({ gasLimit: gasRequired }, id).signAndSend(address, { signer: injector.signer }, (res) => {
+      await tOpen({ gasLimit: gasRequired }, id).signAndSend(address, { signer: injector.signer }, (res) => {
         if (res.status?.isInBlock) { alert('Match opened'); refreshMatchInfo(id); }
       });
     } catch (error) { console.error('Open error:', error); alert('Error: ' + error.message); }
@@ -200,9 +206,12 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
       const injector = await web3FromAddress(address);
       const id = chainMatchId; if (id == null) { alert('Sync to chain first'); return; }
       const gasLimit = makeGasLimit(api, { refTime: 2_000_000_000, proofSize: 200_000, legacyWeight: 4_000_000_000 });
-      const { gasRequired, result } = await contract.query.close_match(address, { gasLimit }, id);
+      const qClose = pickMessage(contract.query, 'close_match', 'closeMatch');
+      const tClose = pickMessage(contract.tx, 'close_match', 'closeMatch');
+      if (!qClose || !tClose) throw new Error('close_match message not found in ABI');
+      const { gasRequired, result } = await qClose(address, { gasLimit }, id);
       if (result.isErr) throw new Error('Query failed');
-      await contract.tx.close_match({ gasLimit: gasRequired }, id).signAndSend(address, { signer: injector.signer }, (res) => {
+      await tClose({ gasLimit: gasRequired }, id).signAndSend(address, { signer: injector.signer }, (res) => {
         if (res.status?.isInBlock) { alert('Match closed'); refreshMatchInfo(id); }
       });
     } catch (error) { console.error('Close error:', error); alert('Error: ' + error.message); }
@@ -217,9 +226,12 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
       const injector = await web3FromAddress(address);
       const id = chainMatchId; if (id == null) { alert('Sync to chain first'); return; }
       const gasLimit = makeGasLimit(api, { refTime: 3_000_000_000, proofSize: 300_000, legacyWeight: 6_000_000_000 });
-      const { gasRequired, result } = await contract.query.settle_match(address, { gasLimit }, id, resultIndex);
+      const qSettle = pickMessage(contract.query, 'settle_match', 'settleMatch');
+      const tSettle = pickMessage(contract.tx, 'settle_match', 'settleMatch');
+      if (!qSettle || !tSettle) throw new Error('settle_match message not found in ABI');
+      const { gasRequired, result } = await qSettle(address, { gasLimit }, id, resultIndex);
       if (result.isErr) throw new Error('Query failed');
-      await contract.tx.settle_match({ gasLimit: gasRequired }, id, resultIndex).signAndSend(address, { signer: injector.signer }, (res) => {
+      await tSettle({ gasLimit: gasRequired }, id, resultIndex).signAndSend(address, { signer: injector.signer }, (res) => {
         if (res.status?.isInBlock) { alert('Match settled'); refreshMatchInfo(id); }
       });
     } catch (error) { console.error('Settle error:', error); alert('Error: ' + error.message); }
@@ -234,9 +246,12 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
       const injector = await web3FromAddress(address);
       const id = chainMatchId; if (id == null) { alert('Sync to chain first'); return; }
       const gasLimit = makeGasLimit(api, { refTime: 3_000_000_000, proofSize: 300_000, legacyWeight: 6_000_000_000 });
-      const { gasRequired, result } = await contract.query.claim_payout(address, { gasLimit }, id);
+      const qClaim = pickMessage(contract.query, 'claim_payout', 'claimPayout');
+      const tClaim = pickMessage(contract.tx, 'claim_payout', 'claimPayout');
+      if (!qClaim || !tClaim) throw new Error('claim_payout message not found in ABI');
+      const { gasRequired, result } = await qClaim(address, { gasLimit }, id);
       if (result.isErr) throw new Error('Query failed');
-      await contract.tx.claim_payout({ gasLimit: gasRequired }, id).signAndSend(address, { signer: injector.signer }, (res) => {
+      await tClaim({ gasLimit: gasRequired }, id).signAndSend(address, { signer: injector.signer }, (res) => {
         if (res.status?.isInBlock) { alert('Payout claimed'); refreshMatchInfo(id); }
       });
     } catch (error) { console.error('Claim error:', error); alert('Error: ' + error.message); }
@@ -255,37 +270,36 @@ export function BetPanel({ teamA = 'Team A', teamB = 'Team B', matchId }) {
       const a = stringToBytes32(teamA);
       const b = stringToBytes32(teamB);
 
+      const qCreate = pickMessage(contract.query, 'create_match', 'createMatch');
+      const tCreate = pickMessage(contract.tx, 'create_match', 'createMatch');
+      if (!qCreate || !tCreate) throw new Error('create_match message not found in ABI');
+
       // 预估 gas / English: dry-run for gas
-      const { gasRequired, result, output } = await contract.query.create_match(address, { gasLimit }, a, b);
+      const { gasRequired, result, output } = await qCreate(address, { gasLimit }, a, b);
       if (result.isErr) throw new Error('Query failed');
 
       // 发送交易 / English: send tx
-      await contract.tx.create_match({ gasLimit: gasRequired }, a, b)
-        .signAndSend(address, { signer: injector.signer }, (res) => {
-          if (res.status?.isInBlock) {
-            // 小心：返回值获取需要等待事件或 output；这里优先用 dry-run 的 output
-            const human = output?.toHuman?.();
-            // dry-run 返回 Ok(u128) 包在 Result/Option 中，尝试解析
-            let newId = undefined;
-            try {
-              const j = output?.toJSON?.();
-              // toJSON 形如 { ok: "123" } 或 { Ok: 123 }
-              newId = j?.ok ?? j?.Ok ?? null;
-            } catch {}
-            if (newId == null && human) {
-              // human 形如 { Ok: '123' }
-              newId = human.Ok || human.ok || null;
-            }
-            if (newId == null) {
-              alert('Created on-chain, but failed to read match id. Please refresh later.');
-            } else {
-              persistChainMapping(matchId, newId);
-              setChainMatchId(Number(newId));
-              alert(`Match created on-chain with id ${newId}`);
-              refreshMatchInfo(Number(newId));
-            }
+      await tCreate({ gasLimit: gasRequired }, a, b).signAndSend(address, { signer: injector.signer }, (res) => {
+        if (res.status?.isInBlock) {
+          const human = output?.toHuman?.();
+          let newId = undefined;
+          try {
+            const j = output?.toJSON?.();
+            newId = j?.ok ?? j?.Ok ?? null;
+          } catch {}
+          if (newId == null && human) {
+            newId = human.Ok || human.ok || null;
           }
-        });
+          if (newId == null) {
+            alert('Created on-chain, but failed to read match id. Please refresh later.');
+          } else {
+            persistChainMapping(matchId, newId);
+            setChainMatchId(Number(newId));
+            alert(`Match created on-chain with id ${newId}`);
+            refreshMatchInfo(Number(newId));
+          }
+        }
+      });
     } catch (error) {
       console.error('Sync local->chain error:', error);
       alert('Error: ' + error.message);

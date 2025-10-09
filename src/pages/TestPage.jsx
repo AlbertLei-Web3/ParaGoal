@@ -8,7 +8,7 @@ import { CONTRACT_ADDRESS, CONTRACT_ABI, WRITE_FUNC, READ_FUNC, EXPLORER_BASE_UR
 import { ContractPromise } from '@polkadot/api-contract';
 import { web3Accounts, web3Enable, web3FromAddress } from '@polkadot/extension-dapp';
 import { CONTRACT_METADATA } from '../services/contractConfig';
-import { makeGasLimit } from '../services/contractsCompat';
+import { makeGasLimit, pickMessage } from '../services/contractsCompat';
 
 export function TestPage() {
   // Placeholder states; will be wired to real chain later
@@ -82,15 +82,14 @@ export function TestPage() {
 
       const injector = await web3FromAddress(account.address);
 
-      // Call inject_pool (payable)
-      const { gasRequired, result } = await contract.query.inject_pool(
-        account.address,
-        { value, gasLimit },
-        matchId
-      );
+      // Call inject_pool (payable) with snake/camel case compatibility
+      const qInjectPool = pickMessage(contract.query, 'inject_pool', 'injectPool')
+      const tInjectPool = pickMessage(contract.tx, 'inject_pool', 'injectPool')
+      if (!qInjectPool || !tInjectPool) throw new Error('inject_pool message not found in ABI')
+      const { gasRequired, result } = await qInjectPool(account.address, { value, gasLimit }, matchId);
 
       if (result.isOk) {
-        await contract.tx.inject_pool({ gasLimit: gasRequired, value }, matchId).signAndSend(account.address, { signer: injector.signer }, (status) => {
+        await tInjectPool({ gasLimit: gasRequired, value }, matchId).signAndSend(account.address, { signer: injector.signer }, (status) => {
           if (status.isInBlock) {
             setTxHash(status.asInBlock.toHex());
             alert('Transaction successful!');
@@ -101,7 +100,9 @@ export function TestPage() {
       }
 
       // Read example: get_match
-      const readResult = await contract.query.get_match(account.address, { gasLimit }, matchId);
+      const qGetMatch = pickMessage(contract.query, 'get_match', 'getMatch')
+      if (!qGetMatch) throw new Error('get_match message not found in ABI')
+      const readResult = await qGetMatch(account.address, { gasLimit }, matchId);
       setReadValue(JSON.stringify(readResult.output.toHuman()));
 
     } catch (error) {
